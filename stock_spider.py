@@ -2,7 +2,7 @@
 cron: 40 30 11 * * 1-5  stock_spider.py
 new Env('上证指数');
 """
-import my_notify
+import sendNotify
 import requests
 from stock_detail import get_stock_detail
 
@@ -97,7 +97,7 @@ def notify_with_markdown():
 '''
     for item in stockData:
         content += f'| {item["id"]} | {item["name"]} | {item["price"]} | {item["increase"]} |\n'
-    my_notify.serverJMy(generate_title(), content)
+    sendNotify.serverJMy(generate_title(), content)
     with open("Test.md", 'w') as f:
         f.write(content)
 

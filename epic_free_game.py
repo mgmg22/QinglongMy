@@ -6,7 +6,7 @@ new Env('Epic每周限免');
 """
 import json
 import requests
-import my_notify
+import sendNotify
 from datetime import datetime
 
 
@@ -85,7 +85,7 @@ def notify_markdown(games: dict):
     ![{game['title']}]({images[game['title']]})
 
 '''
-    my_notify.serverJMy("Epic 每周限免", content)
+    sendNotify.serverJMy("Epic 每周限免", content)
     # with open(filename, 'w') as f:
     #     f.write(content)
 

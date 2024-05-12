@@ -6,7 +6,7 @@ new Env('微博热搜');
 """
 from bs4 import BeautifulSoup
 import requests
-import my_notify
+import sendNotify
 
 summary_list = []
 
@@ -65,7 +65,7 @@ def notify_markdown():
         content += f'''
 [{item['title']}](https://s.weibo.com/{item['href']}){state_mark}
 '''
-    my_notify.serverJMy(summary_list[0]["title"], content)
+    sendNotify.serverJMy(summary_list[0]["title"], content)
     with open("summary.md", 'w', encoding='utf-8') as f:
         f.write(content)
 
