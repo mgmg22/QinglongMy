@@ -6,7 +6,7 @@ new Env('线报0818');
 """
 from bs4 import BeautifulSoup
 import requests
-import notify
+import my_notify
 
 xb_list = []
 

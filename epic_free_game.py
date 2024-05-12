@@ -6,7 +6,7 @@ new Env('Epic每周限免');
 """
 import json
 import requests
-import notify
+import my_notify
 from datetime import datetime
 
 

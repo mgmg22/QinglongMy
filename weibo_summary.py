@@ -6,7 +6,7 @@ new Env('微博热搜');
 """
 from bs4 import BeautifulSoup
 import requests
-import notify
+import my_notify
 
 summary_list = []
 
