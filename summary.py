@@ -1,7 +1,7 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*
 """
-cron: 5 9  * * * summary.py
+cron: 5 9 * * * summary.py
 new Env('微博热搜');
 """
 from bs4 import BeautifulSoup
