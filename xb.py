@@ -172,7 +172,7 @@ def notify_markdown():
 {item['content']}
 '''
         sendNotify.pushplus_bot_my(xb_list[0]["title"], content)
-        with open("xb.md", 'w', encoding='utf-8') as f:
+        with open("log_xb.md", 'w', encoding='utf-8') as f:
             f.write(content)
     else:
         print("暂无线报！！")
