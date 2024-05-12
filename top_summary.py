@@ -1,7 +1,7 @@
-'''
-cron: 5 9,17  * * *  day_summary.py
+"""
+cron: 5 9  * * *  top_summary.py
 new Env('微博热搜');
-'''
+"""
 from bs4 import BeautifulSoup
 import requests
 import notify

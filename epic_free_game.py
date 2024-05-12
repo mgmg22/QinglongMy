@@ -1,9 +1,9 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*
-'''
+"""
 cron: 2 0 0 * * 6 epic_free_game.py
 new Env('Epic每周限免');
-'''
+"""
 import json
 import requests
 import notify

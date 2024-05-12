@@ -1,7 +1,7 @@
-'''
+"""
 cron: 40 30 11 * * 1-5  stock_spider.py
 new Env('上证指数');
-'''
+"""
 import notify
 import requests
 from stock_detail import get_stock_detail
