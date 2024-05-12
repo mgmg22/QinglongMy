@@ -1,7 +1,7 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*
 """
-cron: 3  8/1  * * *  some.py
+cron: 2 0 0 * * 6 some.py
 new Env('线报0818');
 """
 from bs4 import BeautifulSoup
