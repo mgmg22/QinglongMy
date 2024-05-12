@@ -97,7 +97,7 @@ def notify_with_markdown():
 '''
     for item in stockData:
         content += f'| {item["id"]} | {item["name"]} | {item["price"]} | {item["increase"]} |\n'
-    notify.serverJMy(generate_title(), content)
+    my_notify.serverJMy(generate_title(), content)
     with open("Test.md", 'w') as f:
         f.write(content)
 

@@ -65,7 +65,7 @@ def notify_markdown():
         content += f'''
 [{item['title']}](https://s.weibo.com/{item['href']}){state_mark}
 '''
-    notify.serverJMy(summary_list[0]["title"], content)
+    my_notify.serverJMy(summary_list[0]["title"], content)
     with open("summary.md", 'w', encoding='utf-8') as f:
         f.write(content)
 

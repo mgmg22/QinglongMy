@@ -170,7 +170,7 @@ def notify_markdown():
 ##### [{item['title']}]({item['href']})
 {item['content']}
 '''
-        notify.pushplus_bot_my(xb_list[0]["title"], content)
+        my_notify.pushplus_bot_my(xb_list[0]["title"], content)
         with open("xb.md", 'w', encoding='utf-8') as f:
             f.write(content)
     else:
