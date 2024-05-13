@@ -316,9 +316,10 @@ def pushplus_bot_my(title: str, content: str) -> None:
     response = requests.post(url=url, data=body, headers=headers).json()
     if response["code"] == 200:
         print("PUSHPLUS_MY 推送成功！")
-        pushplus_bot_second(title,content)
+        pushplus_bot_second(title, content)
     else:
         print("PUSHPLUS_MY 推送失败！")
+
 
 def pushplus_bot_second(title: str, content: str) -> None:
     if not push_config.get("PUSH_PLUS_TOKEN_SECOND"):
