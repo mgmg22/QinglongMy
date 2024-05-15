@@ -78,7 +78,8 @@ push_config = {
 
     'PUSH_KEY_MY': '',  # server 酱的 PUSH_KEY，兼容旧版与 Turbo 版  我的
     'PUSH_PLUS_TOKEN_MY': '',  # push+ 微信推送的用户令牌  我的
-    'PUSH_PLUS_TOKEN_SECOND': '',  # push+ 微信推送的用户令牌  我的
+    'PUSH_PLUS_TOKEN_SECOND': '',  # push+ 微信推送的用户令牌  我的PUSH_PLUS_TOKEN_SECOND
+    'PUSH_PLUS_TOKEN_THIRD': '',  # push+ 微信推送的用户令牌  我的PUSH_PLUS_TOKEN_THIRD
 }
 notify_function = []
 # fmt: on
@@ -317,6 +318,7 @@ def pushplus_bot_my(title: str, content: str) -> None:
     if response["code"] == 200:
         print("PUSHPLUS_MY 推送成功！")
         pushplus_bot_second(title, content)
+        pushplus_bot_third(title, content)
     else:
         print("PUSHPLUS_MY 推送失败！")
 
@@ -340,6 +342,27 @@ def pushplus_bot_second(title: str, content: str) -> None:
         print("PUSHPLUS_SECOND 推送成功！")
     else:
         print("PUSHPLUS_SECOND 推送失败！")
+
+
+def pushplus_bot_third(title: str, content: str) -> None:
+    if not push_config.get("PUSH_PLUS_TOKEN_THIRD"):
+        print("PUSHPLUS_MY 服务的 PUSH_PLUS_TOKEN_THIRD 未设置!!\n取消推送")
+        return
+    print("PUSH_PLUS_TOKEN_THIRD 服务启动")
+    url = "http://www.pushplus.plus/send"
+    data = {
+        "token": push_config.get("PUSH_PLUS_TOKEN_THIRD"),
+        "title": title,
+        "content": content,
+        "template": "markdown"
+    }
+    body = json.dumps(data).encode(encoding="utf-8")
+    headers = {"Content-Type": "application/json"}
+    response = requests.post(url=url, data=body, headers=headers).json()
+    if response["code"] == 200:
+        print("PUSH_PLUS_TOKEN_THIRD 推送成功！")
+    else:
+        print("PUSH_PLUS_TOKEN_THIRD 推送失败！")
 
 
 def qmsg_bot(title: str, content: str) -> None:
