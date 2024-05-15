@@ -304,7 +304,6 @@ def pushplus_bot_my(title: str, content: str) -> None:
     if not push_config.get("PUSH_PLUS_TOKEN_MY"):
         print("PUSHPLUS_MY 服务的 PUSH_PLUS_TOKEN_MY 未设置!!\n取消推送")
         return
-    print("PUSHPLUS_MY 服务启动")
     url = "http://www.pushplus.plus/send"
     data = {
         "token": push_config.get("PUSH_PLUS_TOKEN_MY"),
@@ -327,7 +326,6 @@ def pushplus_bot_second(title: str, content: str) -> None:
     if not push_config.get("PUSH_PLUS_TOKEN_SECOND"):
         print("PUSHPLUS_MY 服务的 PUSH_PLUS_TOKEN_SECOND 未设置!!\n取消推送")
         return
-    print("PUSHPLUS_SECOND 服务启动")
     url = "http://www.pushplus.plus/send"
     data = {
         "token": push_config.get("PUSH_PLUS_TOKEN_SECOND"),
@@ -348,7 +346,6 @@ def pushplus_bot_third(title: str, content: str) -> None:
     if not push_config.get("PUSH_PLUS_TOKEN_THIRD"):
         print("PUSHPLUS_MY 服务的 PUSH_PLUS_TOKEN_THIRD 未设置!!\n取消推送")
         return
-    print("PUSH_PLUS_THIRD 服务启动")
     url = "http://www.pushplus.plus/send"
     data = {
         "token": push_config.get("PUSH_PLUS_TOKEN_THIRD"),
