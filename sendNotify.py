@@ -348,7 +348,7 @@ def pushplus_bot_third(title: str, content: str) -> None:
     if not push_config.get("PUSH_PLUS_TOKEN_THIRD"):
         print("PUSHPLUS_MY 服务的 PUSH_PLUS_TOKEN_THIRD 未设置!!\n取消推送")
         return
-    print("PUSH_PLUS_TOKEN_THIRD 服务启动")
+    print("PUSH_PLUS_THIRD 服务启动")
     url = "http://www.pushplus.plus/send"
     data = {
         "token": push_config.get("PUSH_PLUS_TOKEN_THIRD"),
@@ -360,9 +360,9 @@ def pushplus_bot_third(title: str, content: str) -> None:
     headers = {"Content-Type": "application/json"}
     response = requests.post(url=url, data=body, headers=headers).json()
     if response["code"] == 200:
-        print("PUSH_PLUS_TOKEN_THIRD 推送成功！")
+        print("PUSH_PLUS_THIRD 推送成功！")
     else:
-        print("PUSH_PLUS_TOKEN_THIRD 推送失败！")
+        print("PUSH_PLUS_THIRD 推送失败！")
 
 
 def qmsg_bot(title: str, content: str) -> None:
