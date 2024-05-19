@@ -85,21 +85,21 @@ def add_sw_increase():
 
 
 def notify_with_markdown():
-    content = '''# 今日涨幅统计
+    markdown_text = '''# 今日涨幅统计
 | 代码 | 名称 | 涨幅 |
 |--------|--------|--------|
 '''
     for item in notifyData:
-        content += f'| {item["id"]} | {item["name"]} | {item["increase"]} %|\n'
-    content += '''# 今日个股涨幅统计
+        markdown_text += f'| {item["id"]} | {item["name"]} | {item["increase"]} %|\n'
+    markdown_text += '''# 今日个股涨幅统计
 | 代码 | 名称 | 现价 | 涨幅 |
 |--------|:--------|--------:|--------|
 '''
     for item in stockData:
-        content += f'| {item["id"]} | {item["name"]} | {item["price"]} | {item["increase"]} |\n'
-    sendNotify.serverJMy(generate_title(), content)
+        markdown_text += f'| {item["id"]} | {item["name"]} | {item["price"]} | {item["increase"]} |\n'
+    sendNotify.serverJMy(generate_title(), markdown_text)
     with open("log_stock.md", 'w') as f:
-        f.write(content)
+        f.write(markdown_text)
 
 
 def generate_title() -> str:

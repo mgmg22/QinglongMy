@@ -15,7 +15,7 @@ summary_list = []
 
 
 def filter_tr(tr):
-    print("-----")
+    # print("-----")
     # 序号、置顶
     td_text1 = tr.select('td.td-01')
     # 超链接 数量
@@ -44,7 +44,7 @@ def filter_tr(tr):
         'href': href,
         'state': state,
     }
-    print(str(td_text2[0]))
+    # print(str(td_text2[0]))
     summary_list.append(item)
 
 
@@ -74,15 +74,15 @@ def notify_markdown():
     counts = Counter(words)
     # 获取出现频率最高的3个词和次数
     most_common_words = counts.most_common(3)
-    print(most_common_words)
-    markdown_text = f'''# 热搜{most_common_words}'''
-
+    most_common_words_str = " ".join([f"{word}: {count}" for word, count in most_common_words])
+    print(most_common_words_str)
+    markdown_text = '''# 微博热搜'''
     for item in summary_list:
         state_mark = f'【{item["state"]}】' if item['state'] else ''
         markdown_text += f'''
 [{item['num']}.{item['title']}](https://s.weibo.com/{item['href']}){state_mark}
 '''
-    sendNotify.serverJMy(summary_list[0]["title"], markdown_text)
+    sendNotify.serverJMy(most_common_words_str, markdown_text)
     with open("log_weibo.md", 'w', encoding='utf-8') as f:
         f.write(markdown_text)
 
