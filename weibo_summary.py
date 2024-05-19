@@ -4,9 +4,12 @@
 cron: 5 9 * * * weibo_summary.py
 new Env('微博热搜');
 """
+from collections import Counter
 from bs4 import BeautifulSoup
 import requests
 import sendNotify
+
+import jieba.analyse
 
 summary_list = []
 
@@ -36,7 +39,8 @@ def filter_tr(tr):
     if "icon-top" in str(td_text1[0]):
         return False
     item = {
-        'title': num + "." + text,
+        'num': num,
+        'title': text,
         'href': href,
         'state': state,
     }
@@ -58,16 +62,29 @@ def get_top_summary():
         filter_tr(tr)
 
 
+def word_segment():
+    jieba.analyse.set_stop_words("stopwords.txt")
+    for item in summary_list:
+        tags = jieba.analyse.extract_tags(item['title'], topK=20)
+        yield from tags
+
+
 def notify_markdown():
-    content = '''# 微博热搜'''
+    words = word_segment()
+    counts = Counter(words)
+    # 获取出现频率最高的3个词和次数
+    most_common_words = counts.most_common(3)
+    print(most_common_words)
+    markdown_text = f'''# 热搜{most_common_words}'''
+
     for item in summary_list:
         state_mark = f'【{item["state"]}】' if item['state'] else ''
-        content += f'''
-[{item['title']}](https://s.weibo.com/{item['href']}){state_mark}
+        markdown_text += f'''
+[{item['num']}.{item['title']}](https://s.weibo.com/{item['href']}){state_mark}
 '''
-    sendNotify.serverJMy(summary_list[0]["title"], content)
+    sendNotify.serverJMy(summary_list[0]["title"], markdown_text)
     with open("log_weibo.md", 'w', encoding='utf-8') as f:
-        f.write(content)
+        f.write(markdown_text)
 
 
 if __name__ == '__main__':
