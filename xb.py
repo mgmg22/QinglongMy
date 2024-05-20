@@ -13,6 +13,8 @@ xb_list = []
 
 def filter_list(tr):
     title = tr.get_text()
+    if tr['href'].startswith("http"):
+        return False
     href = 'http://www.0818tuan.com' + tr['href']
     commonBlackList = [
         "定位", "部分", "东北", "徽", "限上海", "北京", "天津", "重庆", "深圳地区",
