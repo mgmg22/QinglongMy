@@ -22,7 +22,7 @@ def filter_list(tr):
                     "平安", "浙商", "杭州银行", "北京银行", "宁波银行"]
     xykNameList = ["xing/用卡", "信用卡", "心用卡", "性用卡", "xyk"]
     if any(sub in title for sub in xykNameList) and any(sub in title for sub in cxkWhiteList):
-        print("----无该信用卡，已忽略" + '\t\t' + href)
+        print("----无该行信用卡，已忽略" + '\t\t' + href)
         return False
     commonBlackList = [
         "定位", "部分", "东北", "徽", "限上海", "北京", "天津", "重庆", "深圳地区",
@@ -49,7 +49,7 @@ def filter_list(tr):
         "music.163.com/prime/m/gift-receive",
         "ump.cmpay.com/info",
         # ----数码----
-        "华为", "HUAWEI", "荣耀手机", "MiPay", "苹果", "iPhone", "airpods", "pm", "亚瑟", "大疆",
+        "华为", "HUAWEI", "荣耀手机", "MiPay", "果子", "苹果", "iPhone", "airpods", "pm", "亚瑟", "大疆",
     ]
     highBlackList = [
         "【顶】",
@@ -80,7 +80,7 @@ def filter_list(tr):
         # ----负面----
         "不能", "删了", "续费", "限制使用", "被盗", "差评", "监控", "套牢", "猫饼", "怀疑", "不知道", "真的假的",
         "没有", "想法", "网友", "挤", "上科技", "不友好", "骗", "返买", "反买", "关闭", "闲谈", "投诉", "虚假", "进群",
-        "被封", "禁", "修复",
+        "被封", "禁", "修复", "盾",
         # ----时效----
         "以后", "即将", "过期", "长期出", "逾期", "发货", "退货", "防身", "前10", "前年", "收到短信", "上个月",
         "改规则", "几秒",
