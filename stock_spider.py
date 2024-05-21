@@ -16,6 +16,10 @@ stockFilters = {
     'SH600519',
     'SH603605',
     'SH603444',
+    # etf
+    'SH510300',
+    'SH512880',
+    'SZ164906',
 }
 
 notifyData = []
@@ -25,22 +29,6 @@ notifyData = []
 def get_stock_increase():
     for item in stockFilters:
         add_xq_increase(item)
-
-
-# etf涨幅统计
-def get_fund_increase():
-    fund_url = 'https://www.jisilu.cn/data/etf/etf_list/?___jsl=LST___t=1710853843396&rp=25&page=1'
-    resp = requests.post(fund_url)
-    for row in resp.json()['rows']:
-        if row['cell']['fund_nm'] in fundFilters:
-            stock = {
-                'id': row['id'],
-                'name': row['cell']['fund_nm'],
-                'increase': row['cell']['increase_rt'],
-                'current': row['cell']['fund_nav'],
-                'avg_price': '',
-            }
-            notifyData.append(stock)
 
 
 def add_xq_increase(code):
@@ -53,7 +41,8 @@ def add_xq_increase(code):
         'current': str(quote['current']),
         'avg_price': str(quote['avg_price']),
     })
-    print(quote['name'] + str(quote['current']))
+    # TODO 同步顺序
+    print(quote['code'] + quote['name'] + str(quote['current']))
 
 
 #  专门获取医药生物（801150.SL）的数据
@@ -99,5 +88,4 @@ if __name__ == '__main__':
     add_sw_increase()
     add_xq_increase('CSI930599')
     get_stock_increase()
-    get_fund_increase()
     notify_with_markdown()
