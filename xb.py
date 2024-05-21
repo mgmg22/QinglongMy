@@ -21,7 +21,7 @@ def filter_list(tr):
     cxkWhiteList = ["中国银行", "中行", "农业银行", "农行", "交通银行", "交行", "浦发", "邮储", "光大", "兴业",
                     "平安", "浙商", "杭州银行", "北京银行", "宁波银行"]
     xykNameList = ["xing/用卡", "信用卡", "心用卡", "性用卡", "xyk"]
-    if any(sub in title for sub in xykNameList) and any(sub in title for sub in cxkWhiteList):
+    if any(sub in title.lower() for sub in xykNameList) and any(sub in title.lower() for sub in cxkWhiteList):
         print("----无该行信用卡，已忽略" + '\t\t' + href)
         return False
     commonBlackList = [
@@ -49,7 +49,7 @@ def filter_list(tr):
         "music.163.com/prime/m/gift-receive",
         "ump.cmpay.com/info",
         # ----数码----
-        "华为", "HUAWEI", "荣耀手机", "MiPay", "果子", "苹果", "iPhone", "airpods", "pm", "亚瑟", "大疆",
+        "华为", "huawei", "荣耀手机", "mipay", "果子", "苹果", "iphone", "airpods", "pm", "亚瑟", "大疆",
     ]
     highBlackList = [
         "【顶】",
@@ -57,7 +57,7 @@ def filter_list(tr):
         "需要邀请", "助力", "人团", "拼团", "调研", "申请x", "互助", "攒能量",
         "首单", "盲盒", "月黑风高", "互换", "入会", "买1送1", "买一送一",
         # ----网购----
-        "件", "/袋", "/盒", "/斤", "箱", "罐", "XXL", "XL",
+        "件", "/袋", "/盒", "/斤", "箱", "罐", "xl",
         "降", "9.9",
         "如有", "折合", "到手", "买家", "小法庭", "单号", "预售", "客服", "话术", "拆单",
         "查询", "高佣", "想买", "尾款", "小黄鱼",
@@ -74,7 +74,7 @@ def filter_list(tr):
         # ----语气符号----
         "呢", "呀!", "啦 ！", "了。。", "了啊", "啊~", "。。。",
         # ----情绪----
-        "卧槽", "牛逼", "牛B", "还好", "根本", "有点东西", "感觉", "居然", "感谢", "心态", "无语", "奇怪", "毛线",
+        "卧槽", "牛逼", "牛b", "还好", "根本", "有点东西", "感觉", "居然", "感谢", "心态", "无语", "奇怪", "毛线",
         "无耻", "便宜啊", "麻烦", "不如不", "狗了", "差了", "终于", "太次了", "不想搞", "只有", "不服", "见过", "蛋疼",
         "太难", "看到", "发财", "咱", "口感", "妥妥", "死活", "就这", "狗屁",
         # ----负面----
@@ -97,7 +97,7 @@ def filter_list(tr):
         "沥水", "水乳", "卸妆水", "防水", "饮水", "水泡", "水感", "水饺",
         "签到红包", "返红包", "返虹包", "游戏私服", "游戏账号",
         "朋友圈",
-        "cm", "ml", "ML",
+        "cm", "ml",
     ]
     lowBlackList = [
         "多拍", "券包", "免单", "预售", "试用", "点秒杀", "以旧换新", "小程序下单", "直播间下单",
@@ -119,19 +119,19 @@ def filter_list(tr):
         "第三方", "京造", "京东买药", "东方甄选",
         # "喵满分",
         # ----虚拟卡券----
-        "火车", "电影", "门票", "打车", "顺风车", "单车", "流量", "GB", "出行优惠券", "网盘", "地铁", "网易云", "机票",
+        "火车", "电影", "门票", "打车", "顺风车", "单车", "流量", "gb", "出行优惠券", "网盘", "地铁", "网易云", "机票",
         "顺丰", "快递", "充电", "民宿", "芒果", "年卡", "腾讯视频", "体检",
         # ----线下门店----
         "老乡鸡", "沪上阿姨", "永和大王", "沃尔玛", "永辉", "盒马", "联华",
         # ----无效----
-        "PLUS", "plus", "yzf", "翼支付", "SVIP", "联通", "移动套餐", "美团圈圈", "王卡", "钻石会员", "铂金",
-        "元梦之星", "v7", "腾讯vip",
+        "plus", "yzf", "翼支付", "svip", "联通", "移动套餐", "美团圈圈", "王卡", "钻石会员", "铂金",
+        "元梦之星", "腾讯vip",
     ]
-    if any(sub in title for sub in commonBlackList):
+    if any(sub in title.lower() for sub in commonBlackList):
         return False
-    if any(sub in title for sub in highBlackList):
+    if any(sub in title.lower() for sub in highBlackList):
         return False
-    if any(sub in title for sub in lowBlackList):
+    if any(sub in title.lower() for sub in lowBlackList):
         return False
     whiteList = [
         "云闪付", "ysf",
@@ -142,19 +142,19 @@ def filter_list(tr):
         "中信", "动卡空间",
         "淘宝", "tb", "手淘", "天猫", "猫超", "闲鱼", "高德",
         "支付宝", "zfb", "转账", "网商", "某付宝",
-        "微信", "wx", "vx", "v.x", "V.x", "小程序", "立减金", "ljj", "公众号", "原文", "推文",
-        "京东", "狗东", "JD", "京豆", "e卡",
+        "微信", "wx", "vx", "v.x", "小程序", "立减金", "ljj", "公众号", "原文", "推文",
+        "京东", "狗东", "jd", "京豆", "e卡",
         "抖音", "dy",
         "美团", "elm",
         "红包", "虹包", "抽奖", "秒到", "保底", "游戏", "下载",
         "水", "必中",
         # "同程", "携程", "途牛",
-        "话费", "移动", "和包", "电信", "Q币", "扣币",
+        "话费", "移动", "和包", "电信", "q币", "扣币",
         "麦当劳", "肯德基", "必胜客", "星巴克", "瑞幸", "朴朴", "喜茶", "霸王茶姬", "百果园", "茶百道", "库迪",
         "礼品卡", "星礼卡",
         "深圳通", "网上国网",
     ]
-    if not any(sub in title for sub in whiteList) and not any(sub in title for sub in cxkWhiteList):
+    if not any(sub in title.lower() for sub in whiteList) and not any(sub in title.lower() for sub in cxkWhiteList):
         return False
     content = get_content(href)
     # todo 评论回复
