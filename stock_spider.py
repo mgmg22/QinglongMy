@@ -68,10 +68,10 @@ def add_sw_increase():
 def notify_with_markdown():
     markdown_text = '''# 今日行情
 | 名称 | 现价 | 涨幅 | 均价 |
-|--------|:--------|--------:|--------|
+|--------|--------|--------|--------|
 '''
     for item in notifyData:
-        markdown_text += f'| {item["name"]} | {item["current"]} | {item["increase"]} %| {item["avg_price"]} \n'
+        markdown_text += f'| {item["name"]} | {item["current"]} | {item["increase"]}%| {item["avg_price"]} |\n'
     sendNotify.serverJMy(generate_title(), markdown_text)
     with open("log_stock.md", 'w', encoding='utf-8') as f:
         f.write(markdown_text)
