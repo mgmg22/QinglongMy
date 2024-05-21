@@ -117,7 +117,7 @@ def generate_title() -> str:
 
 
 if __name__ == '__main__':
-    ball.set_token('xq_a_token=e8bf59070a162a60f06134803dd747557a3dbc2e;')
+    ball.set_token('xq_a_token=e8bf59070a162a60f06134803dd747557a3dbc2e')
     get_index_increase()
     get_stock_increase()
     get_fund_increase()
