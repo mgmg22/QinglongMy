@@ -4,6 +4,7 @@ new Env('上证指数');
 """
 import sendNotify
 import requests
+import pysnowball as ball
 from stock_detail import get_stock_detail
 
 indexFilters = {
@@ -65,6 +66,15 @@ def get_fund_increase():
             notifyData.append(stock)
 
 
+def add_xq_increase(code):
+    quote = ball.quote_detail(code)['data']['quote']
+    notifyData.append({
+        'id': quote['code'],
+        'name': quote['name'],
+        'increase': quote['percent'],
+    })
+
+
 #  专门获取医药生物（801150.SL）的数据
 def add_sw_increase():
     sw_url = 'http://www.swsresearch.com/institute-sw/api/index_publish/details/index_spread/?swindexcode=801150'
@@ -107,8 +117,11 @@ def generate_title() -> str:
 
 
 if __name__ == '__main__':
+    ball.set_token('xq_a_token=e8bf59070a162a60f06134803dd747557a3dbc2e;')
     get_index_increase()
     get_stock_increase()
     get_fund_increase()
+    add_xq_increase('CSI930599')
+    add_xq_increase('SZ399808')
     add_sw_increase()
     notify_with_markdown()
