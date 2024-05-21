@@ -12,15 +12,15 @@ fundFilters = {
     '证券ETF',
 }
 
-stockFilters = {
+stockFilters = [
     'SH600519',
     'SH603605',
     'SH603444',
     # etf
     'SH510300',
     'SH512880',
-    'SZ164906',
-}
+    'SZ164906'
+]
 
 notifyData = []
 
@@ -41,7 +41,6 @@ def add_xq_increase(code):
         'current': str(quote['current']),
         'avg_price': str(quote['avg_price']),
     })
-    # TODO 同步顺序
     print(quote['code'] + quote['name'] + str(quote['current']))
 
 
