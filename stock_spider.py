@@ -67,7 +67,7 @@ def get_fund_increase():
 
 #  专门获取医药生物（801150.SL）的数据
 def add_sw_increase():
-    sw_url = 'https://www.swsresearch.com/institute-sw/api/index_publish/details/index_spread/?swindexcode=801150'
+    sw_url = 'http://www.swsresearch.com/institute-sw/api/index_publish/details/index_spread/?swindexcode=801150'
     headers = {
         'accept': "*/*",
         'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
@@ -98,7 +98,7 @@ def notify_with_markdown():
     for item in stockData:
         markdown_text += f'| {item["id"]} | {item["name"]} | {item["price"]} | {item["increase"]} |\n'
     sendNotify.serverJMy(generate_title(), markdown_text)
-    with open("log_stock.md", 'w') as f:
+    with open("log_stock.md", 'w', encoding='utf-8') as f:
         f.write(markdown_text)
 
 
