@@ -34,14 +34,15 @@ def get_stock_increase():
 def add_xq_increase(code):
     quote = ball.quote_detail(code)['data']['quote']
     # print(quote)
+    price = format(quote['current'], '.2f')
     notifyData.append({
         'id': quote['code'],
         'name': quote['name'],
         'increase': str(quote['percent']),
-        'current': str(quote['current']),
-        'avg_price': str(quote['avg_price']),
+        'current': price,
+        'avg_price': format(quote['avg_price'], '.2f'),
     })
-    print(f"{quote['code']}\t{quote['name']}\t{quote['current']}")
+    print(f"{quote['code']}\t{quote['name']}\t{price}")
 
 
 #  专门获取医药生物（801150.SL）的数据
