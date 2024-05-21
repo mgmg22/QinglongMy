@@ -41,7 +41,7 @@ def add_xq_increase(code):
         'current': str(quote['current']),
         'avg_price': str(quote['avg_price']),
     })
-    print(quote['code'] + quote['name'] + str(quote['current']))
+    print(f"{quote['code']}\t{quote['name']}\t{quote['current']}")
 
 
 #  专门获取医药生物（801150.SL）的数据

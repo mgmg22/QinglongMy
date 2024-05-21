@@ -162,7 +162,7 @@ def filter_list(tr):
     # print(content)
     for checkItem in commonBlackList:
         if content and checkItem in content.get_text():
-            print(checkItem + "----关键字不合法，已忽略" + '\t\t' + href)
+            print(f"{checkItem}\t\t----关键字不合法，已忽略\t\t{href}")
             return False
     print(title + '\t\t' + href)
     item = {
