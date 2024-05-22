@@ -24,6 +24,13 @@ stockFilters = [
 
 notifyData = []
 
+wx_url = "https://wzq.tenpay.com/mp/v2/#/"
+exchange_types = {
+    'CSI': 'cs',
+    'SH': '1',
+    'SZ': '0'
+}
+
 
 # 个股涨幅统计
 def get_stock_increase():
@@ -31,18 +38,25 @@ def get_stock_increase():
         add_xq_increase(item)
 
 
-def add_xq_increase(code):
-    quote = ball.quote_detail(code)['data']['quote']
+def add_xq_increase(symbol):
+    quote = ball.quote_detail(symbol)['data']['quote']
     # print(quote)
     price = format(quote['current'], '.2f')
+    code = quote['code']
     notifyData.append({
-        'id': quote['code'],
+        'id': code,
         'name': quote['name'],
         'increase': str(quote['percent']),
         'current': price,
         'avg_price': format(quote['avg_price'], '.2f'),
+        'href': get_wx_href(code, quote['exchange']),
     })
-    print(f"{quote['code']}\t{quote['name']}\t{price}")
+    print(f"{code}\t{quote['name']}\t{price}")
+
+
+def get_wx_href(code, exchange):
+    exchange_type = exchange_types.get(exchange, '1')
+    return wx_url + f'trade/stock_detail.shtml?scode={code}&type={exchange_type}'
 
 
 #  专门获取医药生物（801150.SL）的数据
@@ -62,6 +76,7 @@ def add_sw_increase():
         'increase': str(round(((now - last_day) / last_day) * 100, 2)),
         'current': str(now),
         'avg_price': '',
+        'href': wx_url + 'plate/200/detail?plateId=01801150',
     })
 
 
@@ -71,7 +86,7 @@ def notify_with_markdown():
 |--------|--------|--------|--------|
 '''
     for item in notifyData:
-        markdown_text += f'| {item["name"]} | {item["current"]} | {item["increase"]}%| {item["avg_price"]} |\n'
+        markdown_text += f'| [{item["name"]}]({item["href"]}) | {item["current"]} | {item["increase"]}%| {item["avg_price"]} |\n'
     sendNotify.serverJMy(generate_title(), markdown_text)
     with open("log_stock.md", 'w', encoding='utf-8') as f:
         f.write(markdown_text)
