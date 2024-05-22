@@ -77,6 +77,7 @@ push_config = {
     'TG_PROXY_PORT': '',  # tg 机器人的 TG_PROXY_PORT
 
     'PUSH_KEY_MY': '',  # server 酱的 PUSH_KEY，兼容旧版与 Turbo 版  我的
+    'PUSH_KEY_SECOND': '',  # server 酱的 PUSH_KEY，兼容旧版与 Turbo 版  我的
     'PUSH_PLUS_TOKEN_MY': '',  # push+ 微信推送的用户令牌  我的
     'PUSH_PLUS_TOKEN_SECOND': '',  # push+ 微信推送的用户令牌  我的PUSH_PLUS_TOKEN_SECOND
     'PUSH_PLUS_TOKEN_THIRD': '',  # push+ 微信推送的用户令牌  我的PUSH_PLUS_TOKEN_THIRD
@@ -604,12 +605,25 @@ def main():
     send("title", "content")
 
 
+def serverJSecond(title: str, content: str) -> None:
+    if not push_config.get("PUSH_KEY_SECOND"):
+        print("serverJ My服务的 PUSH_KEY_SECOND 未设置!!\n取消推送")
+        return
+    data = {"text": title, "desp": content}
+    url = f'https://sctapi.ftqq.com/{push_config.get("PUSH_KEY_SECOND")}.send'
+
+    response = requests.post(url, data=data).json()
+
+    if response.get("errno") == 0 or response.get("code") == 0:
+        print("serverJ SECOND推送成功！")
+    else:
+        print(f'serverJ SECOND推送失败！错误码：{response["message"]}')
+
+
 def serverJMy(title: str, content: str) -> None:
     if not push_config.get("PUSH_KEY_MY"):
         print("serverJ My服务的 PUSH_KEY_MY 未设置!!\n取消推送")
         return
-    print("serverJ My服务启动")
-
     data = {"text": title, "desp": content}
     url = f'https://sctapi.ftqq.com/{push_config.get("PUSH_KEY_MY")}.send'
 
@@ -617,6 +631,7 @@ def serverJMy(title: str, content: str) -> None:
 
     if response.get("errno") == 0 or response.get("code") == 0:
         print("serverJ My推送成功！")
+        serverJSecond(title, content)
     else:
         print(f'serverJ My推送失败！错误码：{response["message"]}')
 
