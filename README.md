@@ -15,8 +15,8 @@
    ```
 
 1. epic_free_game.py Epic每周限免信息
-2. stock_spider.py 获取指数,ETF涨幅推送到微信
-~~3. stock_detail.py 获取个股现价与涨幅~~
+2. stock_spider.py 获取指数,ETF,个股现价、涨幅、均价等数据推送到微信，支持实时查看行情
+3. ~~stock_detail.py 获取个股现价与涨幅~~
 4. weibo_summary.py 微博热搜列表过滤与词频统计
 
 ## Special statement:
