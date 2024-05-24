@@ -20,7 +20,7 @@ def filter_list(tr):
     href = 'http://www.0818tuan.com' + tr['href']
     cxkWhiteList = ["中国银行", "中行", "农业银行", "农行", "交通银行", "交行", "浦发", "邮储", "光大", "兴业",
                     "平安", "浙商", "杭州银行", "北京银行", "宁波银行"]
-    xykNameList = ["xing/用卡", "信用卡", "心用卡", "性用卡", "xyk"]
+    xykNameList = ["xing/用卡", "信用卡", "信用k", "心用卡", "性用卡", "xyk"]
     if any(sub in title.lower() for sub in xykNameList) and any(sub in title.lower() for sub in cxkWhiteList):
         print("----无该行信用卡，已忽略" + '\t\t' + href)
         return False
@@ -73,6 +73,7 @@ def filter_list(tr):
         "查询", "高佣", "想买", "尾款", "小黄鱼",
         # ----形容词----
         "限量", "健康", "地道", "进口", "真诚", "厉害", "有点6", "骚", "不要脸", "蛋疼", "奇怪", "大事", "谱",
+        "恶心",
         # "瓶",
         # "返",
         # "凑",
