@@ -17,6 +17,8 @@ def filter_list(tr):
         return False
     if tr['href'].startswith("http"):
         return False
+    if tr['href'].endswith("618.html"):
+        return False
     href = 'http://www.0818tuan.com' + tr['href']
     cxkWhiteList = ["中国银行", "中行", "农业银行", "农行", "交通银行", "交行", "浦发", "邮储", "邮政", "光大", "兴业",
                     "平安", "浙商", "杭州银行", "北京银行", "宁波银行"]
