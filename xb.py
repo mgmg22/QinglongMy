@@ -17,7 +17,7 @@ def filter_list(tr):
         return False
     if tr['href'].startswith("http"):
         return False
-    if tr['href'].endswith("618.html"):
+    if "618.html" in tr['href']:
         return False
     href = 'http://www.0818tuan.com' + tr['href']
     cxkWhiteList = ["中国银行", "中行", "农业银行", "农行", "交通银行", "交行", "浦发", "邮储", "邮政", "光大", "兴业",
@@ -37,8 +37,8 @@ def filter_list(tr):
         "陆金所",
         "缤纷生活",
         "浦大喜奔",
-        "邮储联名", "美团联名", "闪光卡", "联名卡",
-        "农行刷卡金",
+        "邮储联名", "美团联名", "闪光卡", "联名卡", "邮政数币",
+        "农行刷卡金", "农行数币",
         "兴业生活",
         "交通银行数币", "交行数币",
         "光大麦当劳", "阳光惠生活", "光大石化",
