@@ -5,6 +5,7 @@ new Env('上证指数');
 import sendNotify
 import requests
 import pysnowball as ball
+import datetime
 
 fundFilters = {
     '酒ETF',
@@ -62,12 +63,12 @@ def get_wx_href(code, exchange):
 
 #  专门获取医药生物（801150.SL）的数据
 def add_sw_increase():
-    sw_url = 'http://www.swsresearch.com/institute-sw/api/index_publish/details/index_spread/?swindexcode=801150'
+    sw_url = 'https://www.swsresearch.com/institute-sw/api/index_publish/details/index_spread/?swindexcode=801150'
     headers = {
         'accept': "*/*",
         'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     }
-    resp = requests.get(sw_url, headers=headers)
+    resp = requests.get(sw_url, headers=headers, verify=False)
     data = resp.json()['data'][0]
     last_day = float(data['l3'])
     now = float(data['l8'])
@@ -82,7 +83,8 @@ def add_sw_increase():
 
 
 def notify_with_markdown():
-    markdown_text = '''# 今日行情
+    today = get_today()
+    markdown_text = f'''# {today} 行情
 | 名称 | 现价 | 涨幅 | 均价 |
 |--------|--------|--------|--------|
 '''
@@ -93,12 +95,20 @@ def notify_with_markdown():
         f.write(markdown_text)
 
 
+def get_today() -> str:
+    today = datetime.date.today()
+    weekday = today.weekday()
+    days = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+    day_name = days[weekday]
+    return str(today) + " " + day_name
+
+
 def generate_title() -> str:
     return str(notifyData[0]["name"] + "涨幅为:" + notifyData[0]["increase"] + "%")
 
 
 if __name__ == '__main__':
-    ball.set_token('xq_a_token=e8bf59070a162a60f06134803dd747557a3dbc2e')
+    ball.set_token('xq_a_token=17b081520970b03418f01e11dcc9f5904302b29f')
     add_xq_increase('SH000001')
     add_xq_increase('SZ399808')
     add_sw_increase()
