@@ -13,11 +13,21 @@ summary_list = []
 # # 排除项
 user_black_list = [
     "杨浦租房",
+    "五角场租赁",
+    "五角场租房",
+    "PiNa@上海直租",
+    "五角场附近",
+    "沪上蜗居小豆豆",
+    "🍃 🇨🇳",
+    "豆友280014083",
+    "瓜瓜一号的墨迹",
+    "黄浦区租房",
+    "娜娜小夭",
 ]
 
 
 def filter_tr(tr):
-    print("-----")
+    # print("-----")
     title = tr.select('td.title')
     if not title:
         return False
@@ -27,9 +37,31 @@ def filter_tr(tr):
     if user in user_black_list:
         return False
     text = title[0].find('a')['title']
+    # 排除项
+    blackList = [
+        "女生",
+        "闵行",
+        "徐家汇",
+        "漕河泾",
+        "松江",
+        "张江",
+        "宝山",
+        "嘉定",
+        "七宝",
+        "静安",
+        "莘庄",
+        "三林",
+        "杨思",
+        "虹桥",
+        "陆家嘴",
+        "泗泾",
+        "呼兰",
+    ]
+    if any(sub in text for sub in blackList):
+        return False
     time = tr.select('td.time')[0].text
     href = title[0].find('a')['href']
-    print(text + '\t\t' + href + '\t\t' + user + '\t\t' + time)
+    print(text + '\t\t' + time + '\t\t' + user + '\t\t' + href)
     item = {
         'user': user,
         'title': text,
@@ -40,7 +72,9 @@ def filter_tr(tr):
 
 
 def get_top_summary():
-    url = 'https://www.douban.com/group/wujiaochang/discussion?start=0'
+    # url = 'https://www.douban.com/group/wujiaochang/discussion?start=0'
+    # url = 'https://www.douban.com/group/383972/discussion?start=0'
+    url = 'https://www.douban.com/group/shanghaizufang/discussion?start=0'
     headers = {
         'accept': "*/*",
         'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
