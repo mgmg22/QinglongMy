@@ -23,6 +23,35 @@ user_black_list = [
     "瓜瓜一号的墨迹",
     "黄浦区租房",
     "娜娜小夭",
+    "自由奔放",
+    "江湖不良人",
+    "华夏东路",
+    "清风秀雅",
+    "灵感之刃",
+    "给你俩窝窝",
+    "简单点",
+    "忧伤的旋律",
+    "C",
+    "九头奈子",
+    "李好闲。",
+    "小张要增肌",
+    "虚伪的世界",
+    "森女与鹿林",
+    "提子",
+    "悲伤的诗篇",
+    "相思成殇",
+    "安静的等待",
+    "-Joker",
+    "豆友279607317",
+    "豆友279607320",
+    "豆友270169870",
+    "豆友279607122",
+    "祈鹤",
+    "可怜式.暧情",
+    "如花美眷",
+    "豆友279434723",
+    "豆友279434727",
+    "从悲伤中抽离",
 ]
 
 
@@ -39,23 +68,16 @@ def filter_tr(tr):
     text = title[0].find('a')['title']
     # 排除项
     blackList = [
-        "女生",
-        "闵行",
-        "徐家汇",
-        "漕河泾",
-        "松江",
-        "张江",
-        "宝山",
+        "女生", "房源", "公积金", "居住证", "钥匙", "别墅",
+        "闵行", "徐家汇", "漕河泾", "漕宝", "七宝", "虹桥",
+        "松江", "九亭", "莘庄",
+        "青浦", "泗泾",
+        "宝山", "上海大学", "呼兰", "彭浦",
         "嘉定",
-        "七宝",
+        "浦东", "陆家嘴", "张江", "世纪公园", "龙阳路", "花木",
         "静安",
-        "莘庄",
-        "三林",
-        "杨思",
-        "虹桥",
-        "陆家嘴",
-        "泗泾",
-        "呼兰",
+        "普陀",
+        "三林", "杨思", "世博",
     ]
     if any(sub in text for sub in blackList):
         return False
@@ -68,13 +90,13 @@ def filter_tr(tr):
         'href': href,
         'time': time,
     }
-    # print(str(td_text2[0]))
+    summary_list.append(item)
 
 
-def get_top_summary():
-    # url = 'https://www.douban.com/group/wujiaochang/discussion?start=0'
-    # url = 'https://www.douban.com/group/383972/discussion?start=0'
-    url = 'https://www.douban.com/group/shanghaizufang/discussion?start=0'
+def get_top_summary(start):
+    # url = 'https://www.douban.com/group/wujiaochang/discussion?start='+ str(start)
+    # url = 'https://www.douban.com/group/383972/discussion?start='+ str(start)
+    url = 'https://www.douban.com/group/shanghaizufang/discussion?start=' + str(start)
     headers = {
         'accept': "*/*",
         'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
@@ -85,8 +107,11 @@ def get_top_summary():
     tr_elements = soup.select('#content > div > div.article > div:nth-child(2) > table> tr')
     for tr in tr_elements:
         filter_tr(tr)
+    if len(summary_list) <= 20:
+        print("-----")
+        get_top_summary(start + 25)
 
 
 if __name__ == '__main__':
-    get_top_summary()
+    get_top_summary(0)
     # notify_markdown()
