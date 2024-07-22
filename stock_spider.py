@@ -41,19 +41,23 @@ def get_stock_increase():
 
 
 def add_xq_increase(symbol):
-    quote = ball.quote_detail(symbol)['data']['quote']
-    # print(quote)
-    price = format(quote['current'], '.2f')
-    code = quote['code']
-    notifyData.append({
-        'id': code,
-        'name': quote['name'],
-        'increase': str(quote['percent']),
-        'current': price,
-        'avg_price': format(quote['avg_price'], '.2f'),
-        'href': get_wx_href(code, quote['exchange']),
-    })
-    print(f"{code}\t{quote['name']}\t{price}")
+    try:
+        quote = ball.quote_detail(symbol)['data']['quote']
+        # print(quote)
+        price = format(quote['current'], '.2f')
+        code = quote['code']
+        notifyData.append({
+            'id': code,
+            'name': quote['name'],
+            'increase': str(quote['percent']),
+            'current': price,
+            'avg_price': format(quote['avg_price'], '.2f'),
+            'href': get_wx_href(code, quote['exchange']),
+        })
+        print(f"{code}\t{quote['name']}\t{price}")
+    except Exception as e:
+        # 打印异常信息
+        print(f"An error occurred: {e}")
 
 
 def get_wx_href(code, exchange):
@@ -83,6 +87,8 @@ def add_sw_increase():
 
 
 def notify_with_markdown():
+    if len(notifyData) < 2:
+        sendNotify.serverJMy("获取上证数据失败，请检查！！", "")
     today = get_today()
     markdown_text = f'''# {today} 行情
 | 名称 | 现价 | 涨幅 | 均价 |
