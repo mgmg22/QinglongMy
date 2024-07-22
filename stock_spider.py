@@ -89,6 +89,7 @@ def add_sw_increase():
 def notify_with_markdown():
     if len(notifyData) < 2:
         sendNotify.serverJMy("获取上证数据失败，请检查！！", "")
+        return
     today = get_today()
     markdown_text = f'''# {today} 行情
 | 名称 | 现价 | 涨幅 | 均价 |
@@ -114,7 +115,7 @@ def generate_title() -> str:
 
 
 if __name__ == '__main__':
-    ball.set_token('xq_a_token=17b081520970b03418f01e11dcc9f5904302b29f')
+    ball.set_token('xq_a_token=2c5e1bd8101bfb889949cc25a0bd9dd3b828cd8f')  # token一个月会失效
     add_xq_increase('SH000001')
     add_xq_increase('SZ399808')
     add_sw_increase()
