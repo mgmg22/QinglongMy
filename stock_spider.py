@@ -1,6 +1,8 @@
 """
 cron: 40 30 11 * * 1-5  stock_spider.py
 new Env('上证指数');
+雪球API:https://github.com/uname-yang/pysnowball
+申万宏源数据：https://www.swsresearch.com/institute_sw/allIndex/releasedIndex/releasedetail?code=801150&name=%E5%8C%BB%E8%8D%AF%E7%94%9F%E7%89%A9
 """
 import sendNotify
 import requests
