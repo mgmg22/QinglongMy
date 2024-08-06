@@ -108,7 +108,7 @@ def filter_list(tr):
         "热水", "玻璃水", "口水", "缩水", "水龙", "水润", "水牛", "水枪", "香水", "水壶", "水蜜",
         "沥水", "水乳", "卸妆水", "防水", "饮水", "水泡", "水感", "水饺", "水杨", "水器",
         "签到红包", "返红包", "返虹包", "游戏私服", "游戏账号",
-        "朋友圈",
+        "朋友圈", "转网",
         "cm", "ml",
     ]
     lowBlackList = [
@@ -176,10 +176,16 @@ def filter_list(tr):
             print(f"{checkItem}\t\t----关键字不合法，已忽略\t\t{href}")
             return False
     print(title + '\t\t' + href)
+    img_tags = content.find_all('img')
+    src_list = []
+    for img in img_tags:
+        src_list.append(img.get('src'))
     item = {
         'title': title,
         'href': href,
-        'content': content
+        'content': content,
+        'text': content.get_text(),
+        'src_list': src_list,
     }
     xb_list.append(item)
 
@@ -213,8 +219,10 @@ def notify_markdown():
         for item in xb_list:
             markdown_text += f'''
 ##### [{item['title']}]({item['href']})
-{item['content']}
+{item['text']}
 '''
+            for img in item['src_list']:
+                markdown_text += f'![]({img})'
         sendNotify.dingding_bot(xb_list[0]["title"], markdown_text)
         with open("log_xb.md", 'w', encoding='utf-8') as f:
             f.write(markdown_text)
