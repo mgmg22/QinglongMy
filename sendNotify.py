@@ -156,7 +156,7 @@ def dingding_bot(title: str, content: str) -> None:
     sign = urllib.parse.quote_plus(base64.b64encode(hmac_code))
     url = f'https://oapi.dingtalk.com/robot/send?access_token={push_config.get("DD_BOT_TOKEN")}&timestamp={timestamp}&sign={sign}'
     headers = {"Content-Type": "application/json;charset=utf-8"}
-    data = {"msgtype": "text", "text": {"content": f"{title}\n\n{content}"}}
+    data = {"msgtype": "markdown", "markdown": {"title": f"{title}", "text": f"{content}"}}
     response = requests.post(
         url=url, data=json.dumps(data), headers=headers, timeout=15
     ).json()
@@ -301,6 +301,7 @@ def pushplus_bot(title: str, content: str) -> None:
             print("PUSHPLUS 推送失败！")
 
 
+@DeprecationWarning
 def pushplus_bot_my(title: str, content: str) -> None:
     if not push_config.get("PUSH_PLUS_TOKEN_MY"):
         print("PUSHPLUS_MY 服务的 PUSH_PLUS_TOKEN_MY 未设置!!\n取消推送")
@@ -323,6 +324,7 @@ def pushplus_bot_my(title: str, content: str) -> None:
         print("PUSHPLUS_MY 推送失败！")
 
 
+@DeprecationWarning
 def pushplus_bot_second(title: str, content: str) -> None:
     if not push_config.get("PUSH_PLUS_TOKEN_SECOND"):
         print("PUSHPLUS_MY 服务的 PUSH_PLUS_TOKEN_SECOND 未设置!!\n取消推送")
@@ -343,6 +345,7 @@ def pushplus_bot_second(title: str, content: str) -> None:
         print("PUSHPLUS_SECOND 推送失败！")
 
 
+@DeprecationWarning
 def pushplus_bot_third(title: str, content: str) -> None:
     if not push_config.get("PUSH_PLUS_TOKEN_THIRD"):
         print("PUSHPLUS_MY 服务的 PUSH_PLUS_TOKEN_THIRD 未设置!!\n取消推送")

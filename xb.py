@@ -215,7 +215,7 @@ def notify_markdown():
 ##### [{item['title']}]({item['href']})
 {item['content']}
 '''
-        sendNotify.pushplus_bot_my(xb_list[0]["title"], markdown_text)
+        sendNotify.dingding_bot(xb_list[0]["title"], markdown_text)
         with open("log_xb.md", 'w', encoding='utf-8') as f:
             f.write(markdown_text)
     else:
