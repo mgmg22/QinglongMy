@@ -7,8 +7,18 @@ new Env('线报0818');
 from bs4 import BeautifulSoup
 import requests
 import sendNotify
+import sqlite3
 
 xb_list = []
+conn = sqlite3.connect('xb.db')
+cursor = conn.cursor()
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS titles (
+        id INTEGER PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL,
+        href TEXT NOT NULL
+    )
+    ''')
 
 
 def filter_list(tr):
@@ -168,6 +178,10 @@ def filter_list(tr):
     ]
     if not any(sub in title.lower() for sub in whiteList) and not any(sub in title.lower() for sub in cxkWhiteList):
         return False
+    for row in get_db_data():
+        if title == row[1]:
+            print('重复已忽略')
+            return False
     content = get_content(href)
     # todo 评论回复
     # print(content)
@@ -223,6 +237,8 @@ def notify_markdown():
 '''
             for img in item['src_list']:
                 markdown_text += f'![]({img})'
+        insert_db(xb_list)
+        # print_db()
         sendNotify.dingding_bot(xb_list[0]["title"], markdown_text)
         with open("log_xb.md", 'w', encoding='utf-8') as f:
             f.write(markdown_text)
@@ -230,6 +246,35 @@ def notify_markdown():
         print("暂无线报！！")
 
 
+def insert_db(xb_list):
+    # 使用列表推导式将每个元素转换成元组
+    my_list_of_tuples = [(x['title'], x['href']) for x in xb_list]
+    # 使用 executemany 来插入多条记录
+    cursor.executemany('INSERT OR IGNORE INTO titles (name, href) VALUES (?, ?)', my_list_of_tuples)
+    conn.commit()
+
+
+def print_db():
+    for row in get_db_data():
+        print(row)
+
+
+def get_db_data():
+    cursor.execute('SELECT * FROM titles')
+    return cursor.fetchall()
+
+
+def close_db():
+    if cursor:
+        cursor.close()
+    if conn:
+        conn.close()
+
+
 if __name__ == '__main__':
-    get_top_summary()
-    notify_markdown()
+    try:
+        # print_db()
+        get_top_summary()
+        notify_markdown()
+    finally:
+        close_db()
