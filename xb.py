@@ -151,6 +151,7 @@ def filter_list(tr):
         # ----无效----
         "plus", "yzf", "翼支付", "svip", "联通", "移动套餐", "美团圈圈", "王卡", "钻石会员", "铂金",
         "元梦之星", "腾讯vip", "胡姬花",
+        "聚惠出行",
     ]
     if any(sub in title.lower() for sub in commonBlackList):
         return False
