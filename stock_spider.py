@@ -74,7 +74,8 @@ def add_sw_increase():
         'accept': "*/*",
         'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     }
-    resp = requests.get(sw_url, headers=headers, verify=False)
+    # resp = requests.get(sw_url, headers=headers, verify=False)
+    resp = requests.get(sw_url, headers=headers)
     data = resp.json()['data'][0]
     last_day = float(data['l3'])
     now = float(data['l8'])
@@ -117,7 +118,7 @@ def generate_title() -> str:
 
 
 if __name__ == '__main__':
-    ball.set_token('xq_a_token=2c5e1bd8101bfb889949cc25a0bd9dd3b828cd8f')  # token一个月会失效
+    ball.set_token('xq_a_token=506853c53e816b183baddc3f44b5535a9171ed5e')  # token一个月会失效
     add_xq_increase('SH000001')
     add_xq_increase('SZ399808')
     add_sw_increase()
