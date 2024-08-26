@@ -18,6 +18,7 @@
 2. [stock_spider](stock_spider.py) 获取指数,ETF,个股现价、涨幅、均价等数据推送到微信，支持实时查看行情
 3. ~~[stock_detail_activity](stock_detail_activity.py) 获取个股现价与涨幅~~
 4. [weibo_summary](weibo_summary.py) 微博热搜列表过滤与词频统计
+5. [send_qq_email](send_qq_email.py) 发送带附件的电子邮件
 
 ## Special statement:
 
