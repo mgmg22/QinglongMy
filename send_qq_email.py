@@ -11,15 +11,15 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 sender = os.getenv('EMAIL_ADDRESS')
-receiver = os.getenv('EMAIL_ADDRESS')
 password = os.getenv('EMAIL_PWD')
+receiver = sender
 # 附件文件路径
 attachment_path = 'xb.db'
 smtp_server = 'smtp.qq.com'
 smtp_port = 465
 
 
-def generate_md_body():
+def generate_html_body():
     md_file_path = 'log_stock.md'
     with open(md_file_path, 'r', encoding='utf-8') as file:
         markdown_content = file.read()
@@ -27,7 +27,7 @@ def generate_md_body():
     return MIMEText(html_table, 'html', 'utf-8')
 
 
-def generate_part():
+def generate_attachment():
     with open(attachment_path, 'rb') as attachment_file:
         part = MIMEBase('application', 'octet-stream')
         part.set_payload(attachment_file.read())
@@ -37,7 +37,7 @@ def generate_part():
     return part
 
 
-def delete_part():
+def delete_attachment_file():
     if os.path.exists(attachment_path):
         try:
             os.remove(attachment_path)
@@ -51,8 +51,8 @@ msg['From'] = f' <{sender}>'
 msg['To'] = f' <{receiver}>'
 msg['Subject'] = f'本周收盘行情及{attachment_path}附件。'
 
-msg.attach(generate_md_body())
-msg.attach(generate_part())
+msg.attach(generate_html_body())
+msg.attach(generate_attachment())
 
 if __name__ == "__main__":
     try:
@@ -60,7 +60,7 @@ if __name__ == "__main__":
         server.login(sender, password)
         server.sendmail(msg['From'], msg['To'], msg.as_string())
         print("邮件发送成功")
-        delete_part()
+        delete_attachment_file()
     except smtplib.SMTPException as e:
         print("Error: 无法发送邮件", e)
     finally:
