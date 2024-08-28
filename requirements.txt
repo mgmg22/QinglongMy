@@ -3,3 +3,4 @@ requests~=2.31.0
 jieba==0.42.1
 pysnowball~=0.1.2
 Markdown>=3.6
+pyperclip>=1.9.0

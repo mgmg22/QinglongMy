@@ -11,7 +11,7 @@
 ### 添加仓库
 
    ```shell
-   ql repo https://github.com/mgmg22/QinglongMy.git "summary|stock_spider|epic_free_game|xb|send_qq" "activity|backUp" "sendNotify|stopwords" "main"
+   ql repo https://github.com/mgmg22/QinglongMy.git "summary|stock_spider|epic_free_game|xb|send_qq" "activity|backUp|bewly" "sendNotify|stopwords" "main"
    ```
 
 1. [epic_free_game](epic_free_game.py) Epic每周限免信息
