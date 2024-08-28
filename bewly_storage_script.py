@@ -4,7 +4,6 @@
 用于管理BewlyBewly:https://github.com/mgmg22/BewlyBewly扩展插件storage的工具脚本
 """
 import pyperclip
-import re
 
 titleBlackList = [
     # 专区
@@ -50,7 +49,7 @@ userBlackList = [
 
 
 def generate_pattern(item_list):
-    escaped_words = [re.escape(word) for item in item_list for word in item.split()]
+    escaped_words = [word for item in item_list for word in item.split()]
     pattern = '|'.join(escaped_words)
     return f"/{pattern}/i"
 
