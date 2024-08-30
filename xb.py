@@ -132,6 +132,12 @@ def filter_list(tr):
             print(f"{checkItem}\t\t----关键字不合法，已忽略\t\t{href}")
             return False
     print(title + '\t\t' + href)
+    text = content.get_text()
+    if text.endswith("…"):
+        a_tag = content.find('a')
+        if a_tag:
+            complete_href = a_tag.get('href')
+            text += complete_href
     img_tags = content.find_all('img')
     src_list = []
     for img in img_tags:
@@ -140,7 +146,7 @@ def filter_list(tr):
         'title': title,
         'href': href,
         'content': content,
-        'text': content.get_text(),
+        'text': text,
         'src_list': src_list,
     }
     xb_list.append(item)
