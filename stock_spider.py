@@ -77,6 +77,9 @@ def add_sw_increase():
     # resp = requests.get(sw_url, headers=headers, verify=False)
     resp = requests.get(sw_url, headers=headers)
     data = resp.json()['data'][0]
+    if datetime.date.today().strftime('%Y%m%d') != str(data['trading_date']):
+        print('申万行情返回日期错误')
+        return
     last_day = float(data['l3'])
     now = float(data['l8'])
     notifyData.append({
