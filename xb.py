@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 import requests
 import sendNotify
 import sqlite3
+import re
 
 xb_list = []
 conn = sqlite3.connect('xb.db')
@@ -133,11 +134,12 @@ def filter_list(tr):
             return False
     print(title + '\t\t' + href)
     text = content.get_text()
-    if text.endswith("…"):
+    match = re.search(r'\bhttp[s]?://\S+\.\S+…', text)
+    if match:
         a_tag = content.find('a')
         if a_tag:
             complete_href = a_tag.get('href')
-            text += complete_href
+            text = text.replace(match.group(), complete_href)
     img_tags = content.find_all('img')
     src_list = []
     for img in img_tags:
