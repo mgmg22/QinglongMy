@@ -226,7 +226,7 @@ def get_content(href):
 
 
 def get_top_summary():
-    url = 'http://www.0818tuan.com/list-1-0.html'
+    url = 'http://www.0818tuan.com/list-1-4.html'
     data = requests.get(url)
     data.encoding = 'utf-8'
     soup = BeautifulSoup(data.text, 'html.parser')
