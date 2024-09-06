@@ -75,35 +75,39 @@ def add_sw_increase():
         'accept': "*/*",
         'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     }
+    increase = ''
+    current = ''
     try:
         # resp = requests.get(sw_url, headers=headers, verify=False)
         resp = requests.get(sw_url, headers=headers)
+        if resp.status_code != 200:
+            print(f"请求失败，状态码：{resp.status_code}")
+            return
         data = resp.json()['data'][0]
         if datetime.date.today().strftime('%Y%m%d') != str(data['trading_date']):
             print('申万行情返回日期错误')
             return
         last_day = float(data['l3'])
         now = float(data['l8'])
+        increase = str(round(((now - last_day) / last_day) * 100, 2))
+        current = str(now)
+    except requests.exceptions.RequestException as e:
+        print(e)
+    except json.JSONDecodeError as e:
+        print("JSON解析错误:", e)
+    except IndexError as e:
+        print("索引错误:", e)
+    except Exception as e:
+        print("发生错误:", e)
+    finally:
         notifyData.append({
             'id': '801150',
             'name': "医药生物",
-            'increase': str(round(((now - last_day) / last_day) * 100, 2)),
-            'current': str(now),
+            'increase': increase,
+            'current': current,
             'avg_price': '',
             'href': wx_url + 'plate/200/detail?plateId=01801150',
         })
-    except requests.exceptions.RequestException as e:
-        # 处理请求异常，比如连接问题
-        print(e)
-    except json.JSONDecodeError as e:
-        # 处理JSON解析异常
-        print("JSON解析错误:", e)
-    except IndexError as e:
-        # 处理索引错误，比如访问不存在的列表元素
-        print("索引错误:", e)
-    except Exception as e:
-        # 处理其他所有异常
-        print("发生错误:", e)
 
 
 def notify_with_markdown():
