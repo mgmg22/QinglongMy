@@ -48,7 +48,7 @@ def has_black_xyk_name(content):
 
 def get_complete_content(content):
     text = content.get_text()
-    match = re.search(r'\bhttp[s]?://\S+\.\S+…', text)
+    match = re.search(r'http[s]?://\S+…', text)
     if match:
         a_tag = content.find('a')
         if a_tag:
