@@ -139,7 +139,7 @@ def generate_title() -> str:
 
 
 if __name__ == '__main__':
-    ball.set_token('xq_a_token=506853c53e816b183baddc3f44b5535a9171ed5e')  # token一个月会失效
+    ball.set_token('xq_a_token=d79b659f72e8b37833f61dee7d29b017e236104c')  # token一个月会失效
     add_xq_increase('SH000001')
     add_xq_increase('SZ399808')
     add_sw_increase()
