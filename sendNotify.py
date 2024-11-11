@@ -58,8 +58,6 @@ push_config = {
 
     'PUSH_KEY': '',  # server 酱的 PUSH_KEY，兼容旧版与 Turbo 版
 
-    'PUSH_PLUS_USER': '',  # push+ 微信推送的群组编码
-
     'QMSG_KEY': '',  # qmsg 酱的 QMSG_KEY
     'QMSG_TYPE': '',  # qmsg 酱的 QMSG_TYPE
 

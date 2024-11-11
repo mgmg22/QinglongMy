@@ -9,7 +9,6 @@ import requests
 import pysnowball as ball
 import datetime
 import json
-import os
 
 fundFilters = {
     '酒ETF',
@@ -139,11 +138,21 @@ def generate_title() -> str:
     return str(notifyData[0]["name"] + "涨幅为:" + notifyData[0]["increase"] + "%")
 
 
+def get_token():
+    url = "https://xueqiu.com"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+        'Accept': 'application/json, text/plain, */*',
+        'Referer': 'https://xueqiu.com/',
+        'Origin': 'https://xueqiu.com'
+    }
+    response = requests.get(url, headers=headers)
+    cookie = response.cookies.get_dict()
+    return cookie['xq_a_token']
+
+
 if __name__ == '__main__':
-    token = '5209b6a702cf70011c6f5c2d8225d3662fae20de'  # token一个月会失效
-    if os.getenv('XQ_A_TOKEN'):
-        token = os.getenv('XQ_A_TOKEN')
-    ball.set_token(f'xq_a_token={token}')
+    ball.set_token(f'xq_a_token={get_token()}')
     add_xq_increase('SH000001')
     add_xq_increase('SZ399808')
     add_sw_increase()
