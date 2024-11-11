@@ -44,7 +44,7 @@ def filter_tr(tr):
         # 主持人
         "谢娜 何炅 撒贝宁",
         # 运动员
-        "丁宁 谌龙 宁泽涛 张继科 马龙 郭晶晶 全红婵 易建联 孙颖莎 王楚钦 帕尔默 樊振东 男单 女单 决赛 郑钦文 曼联 王皓 王曼昱 国足 奥运 冠军 郭艾伦 潘展乐",
+        "丁宁 谌龙 宁泽涛 张继科 马龙 郭晶晶 全红婵 易建联 孙颖莎 王楚钦 帕尔默 樊振东 男单 女单 决赛 郑钦文 曼联 王皓 王曼昱 国足 奥运 冠军 郭艾伦 潘展乐 丁俊晖",
         "梅西",
         # 导演
         "冯小刚 徐峥 于正",
@@ -59,7 +59,7 @@ def filter_tr(tr):
         "孟美岐 吴宣仪 魏大勋 程潇 宋威龙 宋轶 张新成 欧豪 毛不易 张云雷 惠若琪 周慧敏 周雨彤 周柯宇 贺峻霖 申裕斌 柳岩 虞书欣 丁程鑫",
         "马伊琍 袁泉 吴彦祖 佘诗曼 殷桃 王珞丹 李小冉 马思纯 孙越 郭麒麟 周华健 李宗盛 周传雄 羽泉 郑源 张信哲 任贤齐 叶珂 庾澄庆 邓为 田曦薇",
         "尹净汉 王鹤润 秦岚 钟丽缇 范玮琪 徐若瑄 戴佩妮 关淑怡 赵今麦 张真源 戚薇 张元英 东北雨姐 佟丽娅 向佐 周扬青 章泽天 张馨予",
-        "何猷君 徐锦江 金秀贤 曹宝儿 骆鑫 张棨乔 范晓萱 听泉 时代少年团 gigi hanni 李惠利 鞠婧祎 周震南 赵一博 费曼 易梦玲 孟佳 董宇辉 景甜 权志龙",
+        "何猷君 徐锦江 金秀贤 曹宝儿 骆鑫 张棨乔 范晓萱 听泉 时代少年团 gigi hanni 李惠利 鞠婧祎 周震南 赵一博 费曼 易梦玲 孟佳 董宇辉 景甜 权志龙 晓华 向太",
         # 姓
         "杨 汪 陈 朴 翁 黄 刘 杜 花 林 沈 韩 磊",
         # 单字
@@ -137,7 +137,7 @@ def notify_markdown():
         markdown_text += f'''
 [{item['num']}.{item['title']}](https://s.weibo.com/{item['href']}){state_mark}
 '''
-    sendNotify.serverJMy(most_common_words_str, markdown_text)
+    sendNotify.pushMe(most_common_words_str, markdown_text)
     with open("log_weibo.md", 'w', encoding='utf-8') as f:
         f.write(markdown_text)
 

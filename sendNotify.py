@@ -5,7 +5,6 @@ import hashlib
 import hmac
 import json
 import os
-import re
 import threading
 import time
 import urllib.parse
@@ -59,15 +58,10 @@ push_config = {
 
     'PUSH_KEY': '',  # server 酱的 PUSH_KEY，兼容旧版与 Turbo 版
 
-    'PUSH_PLUS_TOKEN': '',  # push+ 微信推送的用户令牌
     'PUSH_PLUS_USER': '',  # push+ 微信推送的群组编码
 
     'QMSG_KEY': '',  # qmsg 酱的 QMSG_KEY
     'QMSG_TYPE': '',  # qmsg 酱的 QMSG_TYPE
-
-    'QYWX_AM': '',  # 企业微信应用
-
-    'QYWX_KEY': '',  # 企业微信机器人
 
     'TG_BOT_TOKEN': '',  # tg 机器人的 TG_BOT_TOKEN，例：1407203283:AAG9rt-6RDaaX0HBLZQq0laNOh898iFYaRQ
     'TG_USER_ID': '',  # tg 机器人的 TG_USER_ID，例：1434078534
@@ -78,9 +72,7 @@ push_config = {
 
     'PUSH_KEY_MY': '',  # server 酱的 PUSH_KEY，兼容旧版与 Turbo 版  我的
     'PUSH_KEY_SECOND': '',  # server 酱的 PUSH_KEY，兼容旧版与 Turbo 版  我的
-    'PUSH_PLUS_TOKEN_MY': '',  # push+ 微信推送的用户令牌  我的
-    'PUSH_PLUS_TOKEN_SECOND': '',  # push+ 微信推送的用户令牌  我的PUSH_PLUS_TOKEN_SECOND
-    'PUSH_PLUS_TOKEN_THIRD': '',  # push+ 微信推送的用户令牌  我的PUSH_PLUS_TOKEN_THIRD
+    'PUSH_ME_KEY': '',  # push.i-i.me的用户令牌
 }
 notify_function = []
 # fmt: on
@@ -265,107 +257,6 @@ def serverJ(title: str, content: str) -> None:
         print(f'serverJ 推送失败！错误码：{response["message"]}')
 
 
-def pushplus_bot(title: str, content: str) -> None:
-    """
-    通过 push+ 推送消息。
-    """
-    if not push_config.get("PUSH_PLUS_TOKEN"):
-        print("PUSHPLUS 服务的 PUSH_PLUS_TOKEN 未设置!!\n取消推送")
-        return
-    print("PUSHPLUS 服务启动")
-
-    url = "http://www.pushplus.plus/send"
-    data = {
-        "token": push_config.get("PUSH_PLUS_TOKEN"),
-        "title": title,
-        "content": content,
-        "topic": push_config.get("PUSH_PLUS_USER"),
-    }
-    body = json.dumps(data).encode(encoding="utf-8")
-    headers = {"Content-Type": "application/json"}
-    response = requests.post(url=url, data=body, headers=headers).json()
-
-    if response["code"] == 200:
-        print("PUSHPLUS 推送成功！")
-
-    else:
-
-        url_old = "http://pushplus.hxtrip.com/send"
-        headers["Accept"] = "application/json"
-        response = requests.post(url=url_old, data=body, headers=headers).json()
-
-        if response["code"] == 200:
-            print("PUSHPLUS(hxtrip) 推送成功！")
-
-        else:
-            print("PUSHPLUS 推送失败！")
-
-
-@DeprecationWarning
-def pushplus_bot_my(title: str, content: str) -> None:
-    if not push_config.get("PUSH_PLUS_TOKEN_MY"):
-        print("PUSHPLUS_MY 服务的 PUSH_PLUS_TOKEN_MY 未设置!!\n取消推送")
-        return
-    url = "http://www.pushplus.plus/send"
-    data = {
-        "token": push_config.get("PUSH_PLUS_TOKEN_MY"),
-        "title": title,
-        "content": content,
-        "template": "markdown"
-    }
-    body = json.dumps(data).encode(encoding="utf-8")
-    headers = {"Content-Type": "application/json"}
-    response = requests.post(url=url, data=body, headers=headers).json()
-    if response["code"] == 200:
-        print("PUSHPLUS_MY 推送成功！")
-        pushplus_bot_second(title, content)
-        pushplus_bot_third(title, content)
-    else:
-        print("PUSHPLUS_MY 推送失败！")
-
-
-@DeprecationWarning
-def pushplus_bot_second(title: str, content: str) -> None:
-    if not push_config.get("PUSH_PLUS_TOKEN_SECOND"):
-        print("PUSHPLUS_MY 服务的 PUSH_PLUS_TOKEN_SECOND 未设置!!\n取消推送")
-        return
-    url = "http://www.pushplus.plus/send"
-    data = {
-        "token": push_config.get("PUSH_PLUS_TOKEN_SECOND"),
-        "title": title,
-        "content": content,
-        "template": "markdown"
-    }
-    body = json.dumps(data).encode(encoding="utf-8")
-    headers = {"Content-Type": "application/json"}
-    response = requests.post(url=url, data=body, headers=headers).json()
-    if response["code"] == 200:
-        print("PUSHPLUS_SECOND 推送成功！")
-    else:
-        print("PUSHPLUS_SECOND 推送失败！")
-
-
-@DeprecationWarning
-def pushplus_bot_third(title: str, content: str) -> None:
-    if not push_config.get("PUSH_PLUS_TOKEN_THIRD"):
-        print("PUSHPLUS_MY 服务的 PUSH_PLUS_TOKEN_THIRD 未设置!!\n取消推送")
-        return
-    url = "http://www.pushplus.plus/send"
-    data = {
-        "token": push_config.get("PUSH_PLUS_TOKEN_THIRD"),
-        "title": title,
-        "content": content,
-        "template": "markdown"
-    }
-    body = json.dumps(data).encode(encoding="utf-8")
-    headers = {"Content-Type": "application/json"}
-    response = requests.post(url=url, data=body, headers=headers).json()
-    if response["code"] == 200:
-        print("PUSH_PLUS_THIRD 推送成功！")
-    else:
-        print("PUSH_PLUS_THIRD 推送失败！")
-
-
 def qmsg_bot(title: str, content: str) -> None:
     """
     使用 qmsg 推送消息。
@@ -383,124 +274,6 @@ def qmsg_bot(title: str, content: str) -> None:
         print("qmsg 推送成功！")
     else:
         print(f'qmsg 推送失败！{response["reason"]}')
-
-
-def wecom_app(title: str, content: str) -> None:
-    """
-    通过 企业微信 APP 推送消息。
-    """
-    if not push_config.get("QYWX_AM"):
-        print("QYWX_AM 未设置!!\n取消推送")
-        return
-    QYWX_AM_AY = re.split(",", push_config.get("QYWX_AM"))
-    if 4 < len(QYWX_AM_AY) > 5:
-        print("QYWX_AM 设置错误!!\n取消推送")
-        return
-    print("企业微信 APP 服务启动")
-
-    corpid = QYWX_AM_AY[0]
-    corpsecret = QYWX_AM_AY[1]
-    touser = QYWX_AM_AY[2]
-    agentid = QYWX_AM_AY[3]
-    try:
-        media_id = QYWX_AM_AY[4]
-    except IndexError:
-        media_id = ""
-    wx = WeCom(corpid, corpsecret, agentid)
-    # 如果没有配置 media_id 默认就以 text 方式发送
-    if not media_id:
-        message = title + "\n\n" + content
-        response = wx.send_text(message, touser)
-    else:
-        response = wx.send_mpnews(title, content, media_id, touser)
-
-    if response == "ok":
-        print("企业微信推送成功！")
-    else:
-        print("企业微信推送失败！错误信息如下：\n", response)
-
-
-class WeCom:
-    def __init__(self, corpid, corpsecret, agentid):
-        self.CORPID = corpid
-        self.CORPSECRET = corpsecret
-        self.AGENTID = agentid
-
-    def get_access_token(self):
-        url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken"
-        values = {
-            "corpid": self.CORPID,
-            "corpsecret": self.CORPSECRET,
-        }
-        req = requests.post(url, params=values)
-        data = json.loads(req.text)
-        return data["access_token"]
-
-    def send_text(self, message, touser="@all"):
-        send_url = (
-                "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token="
-                + self.get_access_token()
-        )
-        send_values = {
-            "touser": touser,
-            "msgtype": "text",
-            "agentid": self.AGENTID,
-            "text": {"content": message},
-            "safe": "0",
-        }
-        send_msges = bytes(json.dumps(send_values), "utf-8")
-        respone = requests.post(send_url, send_msges)
-        respone = respone.json()
-        return respone["errmsg"]
-
-    def send_mpnews(self, title, message, media_id, touser="@all"):
-        send_url = (
-                "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token="
-                + self.get_access_token()
-        )
-        send_values = {
-            "touser": touser,
-            "msgtype": "mpnews",
-            "agentid": self.AGENTID,
-            "mpnews": {
-                "articles": [
-                    {
-                        "title": title,
-                        "thumb_media_id": media_id,
-                        "author": "Author",
-                        "content_source_url": "",
-                        "content": message.replace("\n", "<br/>"),
-                        "digest": message,
-                    }
-                ]
-            },
-        }
-        send_msges = bytes(json.dumps(send_values), "utf-8")
-        respone = requests.post(send_url, send_msges)
-        respone = respone.json()
-        return respone["errmsg"]
-
-
-def wecom_bot(title: str, content: str) -> None:
-    """
-    通过 企业微信机器人 推送消息。
-    """
-    if not push_config.get("QYWX_KEY"):
-        print("企业微信机器人 服务的 QYWX_KEY 未设置!!\n取消推送")
-        return
-    print("企业微信机器人服务启动")
-
-    url = f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={push_config.get('QYWX_KEY')}"
-    headers = {"Content-Type": "application/json;charset=utf-8"}
-    data = {"msgtype": "text", "text": {"content": f"{title}\n\n{content}"}}
-    response = requests.post(
-        url=url, data=json.dumps(data), headers=headers, timeout=15
-    ).json()
-
-    if response["errcode"] == 0:
-        print("企业微信机器人推送成功！")
-    else:
-        print("企业微信机器人推送失败！")
 
 
 def telegram_bot(title: str, content: str) -> None:
@@ -574,14 +347,8 @@ if push_config.get("IGOT_PUSH_KEY"):
     notify_function.append(iGot)
 if push_config.get("PUSH_KEY"):
     notify_function.append(serverJ)
-if push_config.get("PUSH_PLUS_TOKEN"):
-    notify_function.append(pushplus_bot)
 if push_config.get("QMSG_KEY") and push_config.get("QMSG_TYPE"):
     notify_function.append(qmsg_bot)
-if push_config.get("QYWX_AM"):
-    notify_function.append(wecom_app)
-if push_config.get("QYWX_KEY"):
-    notify_function.append(wecom_bot)
 if push_config.get("TG_BOT_TOKEN") and push_config.get("TG_USER_ID"):
     notify_function.append(telegram_bot)
 
@@ -637,6 +404,28 @@ def serverJMy(title: str, content: str) -> None:
         serverJSecond(title, content)
     else:
         print(f'serverJ My推送失败！错误码：{response["message"]}')
+
+
+def pushMe(title: str, content: str) -> None:
+    if not push_config.get("PUSH_ME_KEY"):
+        print("pushMe服务的 PUSH_ME_KEY 未设置!!\n取消推送")
+        return
+    url = "https://push.i-i.me"
+    payload = {
+        'push_key': push_config.get("PUSH_ME_KEY"),
+        'title': title,
+        'content': content,
+        'type': 'markdown'
+    }
+    headers = {
+        'accept': '*/*',
+        'accept-encoding': 'gzip',
+        'accept-language': 'zh-CN,zh;q=0.9',
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.160 Safari/537.36'
+    }
+    response = requests.post(url, headers=headers, data=payload)
+    print(response.text)
 
 
 if __name__ == "__main__":
