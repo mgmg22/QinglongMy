@@ -1,7 +1,7 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*
 """
-cron: 5 9 * * * weibo_summary.py
+cron: 3/30 8/1 * * * weibo_summary.py
 new Env('微博热搜');
 """
 from collections import Counter
@@ -14,13 +14,11 @@ summary_list = []
 
 
 def filter_item(item):
-    # print(item)
+    print(item)
     # 剧集 等
     if item.get('flag_desc'):
         return False
     title = item['word']
-    num = item['realpos']
-    state = item['label_name']
     nameBlackList = [
         # 演员
         "章子怡 成龙 李连杰 周星驰 郭富城 赵丽颖 王一博 肖战 易烊千玺 王俊凯 王源 鹿晗 吴亦凡 张婧仪 严屹宽",
@@ -78,9 +76,9 @@ def filter_item(item):
     if any(word in title for item in countryList for word in item.split()):
         return False
     item = {
-        'num': num,
+        'num': item['realpos'],
         'title': title,
-        'state': state,
+        'state': item['label_name'],
     }
     # print(item)
     summary_list.append(item)
