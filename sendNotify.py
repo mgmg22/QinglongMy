@@ -406,7 +406,7 @@ def serverJMy(title: str, content: str) -> None:
         print(f'serverJ My推送失败！错误码：{response["message"]}')
 
 
-def pushMe(title: str, content: str) -> None:
+def push_me(title: str, content: str, msg_type: str) -> None:
     if not push_config.get("PUSH_ME_KEY"):
         print("pushMe服务的 PUSH_ME_KEY 未设置!!\n取消推送")
         return
@@ -415,7 +415,7 @@ def pushMe(title: str, content: str) -> None:
         'push_key': push_config.get("PUSH_ME_KEY"),
         'title': title,
         'content': content,
-        'type': 'markdown'
+        'type': msg_type
     }
     headers = {
         'accept': '*/*',

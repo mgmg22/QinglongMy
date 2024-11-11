@@ -9,6 +9,7 @@ import requests
 import pysnowball as ball
 import datetime
 import json
+import os
 
 fundFilters = {
     '酒ETF',
@@ -115,7 +116,7 @@ def notify_with_markdown():
         sendNotify.serverJMy("获取上证数据失败，请检查！！", "")
         return
     today = get_today()
-    markdown_text = f'''# {today} 行情
+    markdown_text = f'''### {today} 行情
 | 名称 | 现价 | 涨幅 | 均价 |
 |--------|--------|--------|--------|
 '''
@@ -139,7 +140,10 @@ def generate_title() -> str:
 
 
 if __name__ == '__main__':
-    ball.set_token('xq_a_token=5209b6a702cf70011c6f5c2d8225d3662fae20de')  # token一个月会失效
+    token = '5209b6a702cf70011c6f5c2d8225d3662fae20de'  # token一个月会失效
+    if os.getenv('XQ_A_TOKEN'):
+        token = os.getenv('XQ_A_TOKEN')
+    ball.set_token(f'xq_a_token={token}')
     add_xq_increase('SH000001')
     add_xq_increase('SZ399808')
     add_sw_increase()
