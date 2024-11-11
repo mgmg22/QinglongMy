@@ -138,21 +138,12 @@ def generate_title() -> str:
     return str(notifyData[0]["name"] + "涨幅为:" + notifyData[0]["increase"] + "%")
 
 
-def get_token():
-    url = "https://xueqiu.com"
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
-        'Accept': 'application/json, text/plain, */*',
-        'Referer': 'https://xueqiu.com/',
-        'Origin': 'https://xueqiu.com'
-    }
-    response = requests.get(url, headers=headers)
-    cookie = response.cookies.get_dict()
-    return cookie['xq_a_token']
-
-
 if __name__ == '__main__':
-    ball.set_token(f'xq_a_token={get_token()}')
+    # https://github.com/uname-yang/pysnowball/issues/1
+    r = requests.get("https://xueqiu.com", headers={"user-agent": "Mozilla"})
+    t = r.cookies["xq_a_token"]
+    # print(t)
+    ball.set_token(f'xq_a_token={t}')
     add_xq_increase('SH000001')
     add_xq_increase('SZ399808')
     add_sw_increase()
