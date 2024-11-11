@@ -5,34 +5,22 @@ cron: 5 9 * * * weibo_summary.py
 new Env('微博热搜');
 """
 from collections import Counter
-from bs4 import BeautifulSoup
+from urllib.parse import quote
 import requests
 import sendNotify
-
 import jieba.analyse
 
 summary_list = []
 
 
-def filter_tr(tr):
-    # print("-----")
-    # 序号、置顶
-    td_text1 = tr.select('td.td-01')
-    # 超链接 数量
-    td_text2 = tr.select('td.td-02')
-    # icon 新、热、暖
-    td_text3 = tr.select('td.td-03')
-    text = td_text2[0].find('a').get_text()
-    num = td_text1[0].get_text()
-    href = td_text2[0].find('a')['href']
-    state = td_text3[0].get_text()
-    # print(str(td_text2[0]))
-    # 排除项
-    blackList = [
-        "<span>剧集", "<span>综艺", "<span>演出", "<span>电影", "<span>音乐", "<span>盛典",
-        "ad_id=",
-        ".png",
-    ]
+def filter_item(item):
+    # print(item)
+    # 剧集 等
+    if item.get('flag_desc'):
+        return False
+    title = item['word']
+    num = item['realpos']
+    state = item['label_name']
     nameBlackList = [
         # 演员
         "章子怡 成龙 李连杰 周星驰 郭富城 赵丽颖 王一博 肖战 易烊千玺 王俊凯 王源 鹿晗 吴亦凡 张婧仪 严屹宽",
@@ -83,40 +71,28 @@ def filter_tr(tr):
     countryList = [
         "法国 土耳其 印度 中东 瑞士",
     ]
-    title = str(td_text2[0]).lower()
-    if any(sub in title for sub in blackList):
-        return False
     if any(word in title for item in nameBlackList for word in item.split()):
         return False
     if any(word in title for item in gameBlackList for word in item.split()):
         return False
     if any(word in title for item in countryList for word in item.split()):
         return False
-    # 过滤置顶
-    if "icon-top" in str(td_text1[0]):
-        return False
     item = {
         'num': num,
-        'title': text,
-        'href': href,
+        'title': title,
         'state': state,
     }
-    # print(str(td_text2[0]))
+    # print(item)
     summary_list.append(item)
 
 
-def get_top_summary():
-    url = 'https://s.weibo.com/top/summary'
-    # todo 环境变量
-    headers = {
-        'Cookie': "SUB=_2AkMRUtBSf8NxqwFRmfsUxGrkbop-wg7EieKnDiGJJRMxHRl-yT9kql1ZtRB6OtL-vTbTNhcLy7AgHY2b5GT7UADcvUnR;"
-    }
-    data = requests.get(url, headers=headers)
-    data.encoding = 'utf-8'
-    soup = BeautifulSoup(data.text, 'html.parser')
-    tr_elements = soup.select('#pl_top_realtimehot > table > tbody> tr')
-    for tr in tr_elements:
-        filter_tr(tr)
+def get_hot_search():
+    url = 'https://weibo.com/ajax/side/hotSearch'
+    resp = requests.get(url)
+    resp.encoding = 'utf-8'
+    elements = resp.json()['data']['realtime']
+    for item in elements:
+        filter_item(item)
 
 
 def word_segment():
@@ -137,7 +113,7 @@ def notify_markdown():
     for item in summary_list:
         state_mark = f'【{item["state"]}】' if item['state'] else ''
         markdown_text += f'''
-[{item['num']}.{item['title']}](https://s.weibo.com/{item['href']}){state_mark}
+[{item['num']}.{item['title']}](https://m.weibo.cn/search?containerid=231522type%3D1%26q%3D{quote(item['title'])}&_T_WM=16922097837&v_p=42){state_mark}
 '''
     # sendNotify.push_me(most_common_words_str, markdown_text, "markdown")
     sendNotify.push_me(most_common_words_str, markdown_text, "markdata")
@@ -146,5 +122,5 @@ def notify_markdown():
 
 
 if __name__ == '__main__':
-    get_top_summary()
+    get_hot_search()
     notify_markdown()
