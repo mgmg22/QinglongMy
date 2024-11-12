@@ -20,6 +20,32 @@
 4. [weibo_summary](weibo_summary.py) 微博热搜列表过滤与词频统计
 5. [send_qq_email](send_qq_email.py) 发送带附件的电子邮件
 
+### 推送渠道及在线测试
+
+[Server酱](https://sct.ftqq.com/sendkey/r/14730)(每天5条免费推送额度)
+
+[PushMe](https://push.i-i.me/) 
+
+钉钉群机器人
+
+### 青龙配置文件
+
+```shell
+## ql repo命令拉取脚本时需要拉取的文件后缀，直接写文件后缀名即可
+RepoFileExtensions="js py txt"
+
+# server酱的 PUSH_KEY
+export PUSH_KEY_MY="";
+export PUSH_KEY_SECOND="";
+
+## PushMe的push_key
+export PUSH_ME_KEY="";
+
+## qq邮箱地址和smtp密钥
+export EMAIL_ADDRESS="";
+export EMAIL_PWD="";
+   ```
+
 ## Special statement:
 
 * Any unlocking and decryption analysis scripts involved in the Script project released by this warehouse are only used
