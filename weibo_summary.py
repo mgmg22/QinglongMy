@@ -133,7 +133,7 @@ def notify_markdown():
     for item in summary_list:
         state_mark = f'【{item["state"]}】' if item['state'] else ''
         markdown_text += f'''
-[{item['num']}.{item['title']}](https://m.weibo.cn/search?containerid=231522type%3D1%26q%3D{quote(item['title'])}&_T_WM=16922097837&v_p=42){state_mark}
+{item['num']}.[{item['title']}](https://m.weibo.cn/search?containerid=231522type%3D1%26q%3D{quote(item['title'])}&_T_WM=16922097837&v_p=42){state_mark}
 '''
     insert_db(summary_list)
     # sendNotify.push_me(get_title(), markdown_text, "markdown")
@@ -143,7 +143,7 @@ def notify_markdown():
 
 
 def get_title() -> str:
-    return str(datetime.now().hour) + "点"
+    return str(datetime.now().hour) + "点微博热搜"
 
 
 def insert_db(list):
