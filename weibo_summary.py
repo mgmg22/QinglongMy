@@ -1,7 +1,7 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*
 """
-cron: 3/30 8/1 * * * weibo_summary.py
+cron: 1/31 8/1 * * * weibo_summary.py
 new Env('微博热搜');
 """
 from collections import Counter
@@ -32,7 +32,7 @@ def filter_item(realtime_item):
         if title == row[1]:
             print('重复已忽略')
             return False
-    # print(realtime_item)
+    print(realtime_item)
     nameBlackList = [
         # 演员
         "章子怡 成龙 李连杰 周星驰 郭富城 赵丽颖 王一博 肖战 易烊千玺 王俊凯 王源 鹿晗 吴亦凡 张婧仪 严屹宽",
@@ -123,7 +123,7 @@ def notify_markdown():
     most_common_words = counts.most_common(3)
     most_common_words_str = " ".join([f"{word}: {count}" for word, count in most_common_words])
     print(most_common_words_str)
-    markdown_text = '''# 微博热搜'''
+    markdown_text = ''
     for item in summary_list:
         state_mark = f'【{item["state"]}】' if item['state'] else ''
         markdown_text += f'''
