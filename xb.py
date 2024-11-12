@@ -129,7 +129,7 @@ lowBlackList = [word for item in [
 
 
 def filter_list(tr):
-    title = tr.get_text().lower()
+    title = tr.get_text().lower().strip()
     if title.endswith("？" or "?"):
         return False
     if tr['href'].startswith("http"):
