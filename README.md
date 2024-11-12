@@ -1,34 +1,29 @@
 # QinglongMy
 
-* 自用青龙脚本库
-
-### 安装依赖库
-
+自用青龙脚本库
+## 功能
+* [epic_free_game](epic_free_game.py) Epic每周限免信息
+* [stock_spider](stock_spider.py) 获取指数,ETF,个股现价、涨幅、均价等数据推送到微信，支持实时查看行情
+* ~~[stock_detail_activity](stock_detail_activity.py) 获取个股现价与涨幅~~
+* [weibo_summary](weibo_summary.py) 微博热搜列表过滤与词频统计
+* [send_qq_email](send_qq_email.py) 发送带附件的电子邮件
+## 安装依赖库
    ```shell
    pip3 install -r requirements.txt
    ```
-
-### 添加仓库
+## 添加仓库
 
    ```shell
    ql repo https://github.com/mgmg22/QinglongMy.git "summary|stock_spider|epic_free_game|xb|send_qq" "activity|backUp|bewly" "sendNotify|stopwords" "main"
    ```
 
-1. [epic_free_game](epic_free_game.py) Epic每周限免信息
-2. [stock_spider](stock_spider.py) 获取指数,ETF,个股现价、涨幅、均价等数据推送到微信，支持实时查看行情
-3. ~~[stock_detail_activity](stock_detail_activity.py) 获取个股现价与涨幅~~
-4. [weibo_summary](weibo_summary.py) 微博热搜列表过滤与词频统计
-5. [send_qq_email](send_qq_email.py) 发送带附件的电子邮件
-
-### 推送渠道及在线测试
-
+## 推送渠道及在线测试
 [Server酱](https://sct.ftqq.com/sendkey/r/14730)(每天5条免费推送额度)
 
 [PushMe](https://push.i-i.me/) 
 
 钉钉群机器人
-
-### 青龙配置文件
+## 配置文件
 
 ```shell
 ## ql repo命令拉取脚本时需要拉取的文件后缀，直接写文件后缀名即可
