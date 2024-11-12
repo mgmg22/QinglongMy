@@ -123,11 +123,13 @@ def word_segment():
 def notify_markdown():
     words = word_segment()
     counts = Counter(words)
-    # 获取出现频率最高的3个词和次数
-    most_common_words = counts.most_common(3)
-    most_common_words_str = " ".join([f"{word}: {count}" for word, count in most_common_words])
-    print(most_common_words_str)
-    markdown_text = most_common_words_str
+    start_str = ''
+    # 获取出现频率最高的3个词且次数>1
+    most_common_words = [(word, count) for word, count in counts.most_common(3) if count > 1]
+    if most_common_words:
+        start_str = " ".join([f"{word}: {count}" for word, count in most_common_words])
+        print(start_str)
+    markdown_text = start_str
     for item in summary_list:
         state_mark = f'【{item["state"]}】' if item['state'] else ''
         markdown_text += f'''
