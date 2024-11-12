@@ -10,6 +10,7 @@ import requests
 import sendNotify
 import jieba.analyse
 import sqlite3
+from datetime import datetime
 
 summary_list = []
 conn = sqlite3.connect('wb.db')
@@ -123,17 +124,21 @@ def notify_markdown():
     most_common_words = counts.most_common(3)
     most_common_words_str = " ".join([f"{word}: {count}" for word, count in most_common_words])
     print(most_common_words_str)
-    markdown_text = ''
+    markdown_text = most_common_words_str
     for item in summary_list:
         state_mark = f'【{item["state"]}】' if item['state'] else ''
         markdown_text += f'''
 [{item['num']}.{item['title']}](https://m.weibo.cn/search?containerid=231522type%3D1%26q%3D{quote(item['title'])}&_T_WM=16922097837&v_p=42){state_mark}
 '''
     insert_db(summary_list)
-    # sendNotify.push_me(most_common_words_str, markdown_text, "markdown")
-    sendNotify.push_me(most_common_words_str, markdown_text, "markdata")
+    # sendNotify.push_me(get_title(), markdown_text, "markdown")
+    sendNotify.push_me(get_title(), markdown_text, "markdata")
     with open("log_weibo.md", 'w', encoding='utf-8') as f:
         f.write(markdown_text)
+
+
+def get_title() -> str:
+    return str(datetime.now().hour) + "点"
 
 
 def insert_db(list):
