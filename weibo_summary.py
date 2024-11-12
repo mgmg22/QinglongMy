@@ -1,7 +1,7 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*
 """
-cron: 1/31 8/1 * * * weibo_summary.py
+cron: 1 8/1 * * * weibo_summary.py
 new Env('微博热搜');
 """
 from collections import Counter
