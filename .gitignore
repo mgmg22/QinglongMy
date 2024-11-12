@@ -160,4 +160,5 @@ cython_debug/
 .idea/
 log_xb.md
 xb.db
+wb.db
 temp/

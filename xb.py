@@ -218,11 +218,11 @@ def notify_markdown():
         print("暂无线报！！")
 
 
-def insert_db(xb_list):
+def insert_db(list):
     # 使用列表推导式将每个元素转换成元组
-    my_list_of_tuples = [(x['title'], x['href']) for x in xb_list]
+    tuples_list = [(x['title'], x['href']) for x in list]
     # 使用 executemany 来插入多条记录
-    cursor.executemany('INSERT OR IGNORE INTO titles (name, href) VALUES (?, ?)', my_list_of_tuples)
+    cursor.executemany('INSERT OR IGNORE INTO titles (name, href) VALUES (?, ?)', tuples_list)
     conn.commit()
 
 

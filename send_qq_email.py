@@ -41,6 +41,7 @@ def delete_attachment_file():
     if os.path.exists(attachment_path):
         try:
             os.remove(attachment_path)
+            os.remove('wb.db')
             print(f"{attachment_path} 已被删除。")
         except OSError as e:
             print(f"删除{attachment_path} 出错: {e}")
