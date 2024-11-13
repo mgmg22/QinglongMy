@@ -129,7 +129,7 @@ def notify_markdown():
     if most_common_words:
         start_str = " ".join([f"{word}: {count}" for word, count in most_common_words])
         print(start_str)
-    markdown_text = start_str
+    markdown_text = f'''### {start_str}'''
     for item in summary_list:
         state_mark = f'【{item["state"]}】' if item['state'] else ''
         markdown_text += f'''
