@@ -28,7 +28,7 @@ def filter_item(realtime_item):
     # 剧集等 辟谣等
     if realtime_item.get('flag_desc'):
         return False
-    if realtime_item.get('icon_desc'):
+    if realtime_item.get('is_ad'):
         return False
     title = realtime_item['word']
     for row in get_db_data():
@@ -99,6 +99,7 @@ def filter_item(realtime_item):
     countryList = [
         "法国 土耳其 印度 中东 瑞士",
     ]
+    print(title)
     if any(word in title for item in nameBlackList for word in item.split()):
         return False
     if any(word in title for item in gameBlackList for word in item.split()):
@@ -138,9 +139,8 @@ def notify_markdown():
     markdown_text = ''
     most_common_words = [(word, count) for word, count in counts.most_common(3) if count > 1]
     if most_common_words:
-        start_str = " ".join([f"{word}: {count}" for word, count in most_common_words])
-        print(start_str)
-        markdown_text = f'''### {start_str}'''
+        markdown_text = f'''### {" ".join([f"{word}: {count}" for word, count in most_common_words])}'''
+        print(markdown_text)
     for item in summary_list:
         state_mark = f'【{item["state"]}】' if item['state'] else ''
         markdown_text += f'''
