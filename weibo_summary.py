@@ -73,22 +73,22 @@ def filter_item(realtime_item):
         "女团 娱 艺 剧 恋 乐 毯 逝 赛 歌 舞 演 戏 幼 痘 婚 孕 飒 经纪 网红 公司 解约 解散 维密 首秀 生图 代言 路透 票房 预告 时尚 收官 钓系 镜头",
         "开机 追星 长得 辟谣",
         # 女性
-        "妆 名媛 闺蜜 公主 强奸 猥亵 侵犯 出轨 性侵 美甲 回购 护肤 奶茶",
+        "妆 面霜 名媛 闺蜜 公主 强奸 猥亵 侵犯 出轨 性侵 美甲 回购 护肤 奶茶",
         # 天气
         "热 冷 季 秋 暖",
         # 人称
         "爷 姐 父 儿 弟 妈 老公 妻 夫妇 女孩 师 友 男子 老人 女子 小伙 宝",
         # 身份
-        "专家 主人 租客 女主播 实习 司机 班主任 情侣 小学",
+        "专家 主人 租客 女主播 实习 司机 班主任 情侣 小学 中学",
         "比0 比1 比2 比3 比4 比5 比6 比7 比8 比9 乒 四强 八强 战胜 vs 晋级 输",
         "0分 1分 2分 3分 4分 5分 6分 7分 8分 9分",
         "0后 0万",
         # 英文
         "chill belike vivo oppo vlog cp mbti 强森 布朗尼 詹姆斯 萨 贝克汉姆",
         # 水
-        "背锅 什么 竟然是 值得 到底 差点 没认出 太香了 杀疯了 再也不 告诉 偶遇 怎么 童年 清华 谁能 是懂 抑郁 情绪 骗 证据 飞机",
+        "背锅 什么 竟然是 值得 到底 差点 没认出 太香了 杀疯了 再也不 告诉 偶遇 怎么 童年 清华 谁能 是懂 抑郁 情绪 骗 证据 盘点 评论区",
         # 新闻
-        "预制菜 兼职 救人 爆料 跳楼 骨折 奔现 优惠 套路 柯基",
+        "预制菜 兼职 救人 爆料 跳楼 骨折 奔现 优惠 套路 柯基 有人",
     ]
     gameBlackList = [
         # 游戏
@@ -136,11 +136,12 @@ def notify_markdown():
     counts = Counter(words)
     start_str = ''
     # 获取出现频率最高的3个词且次数>1
+    markdown_text = ''
     most_common_words = [(word, count) for word, count in counts.most_common(3) if count > 1]
     if most_common_words:
         start_str = " ".join([f"{word}: {count}" for word, count in most_common_words])
         print(start_str)
-    markdown_text = f'''### {start_str}'''
+        markdown_text = f'''### {start_str}'''
     for item in summary_list:
         state_mark = f'【{item["state"]}】' if item['state'] else ''
         markdown_text += f'''
