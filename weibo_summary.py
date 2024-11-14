@@ -30,7 +30,7 @@ def filter_item(realtime_item):
         return False
     if realtime_item.get('is_ad'):
         return False
-    title = realtime_item['word']
+    title = realtime_item['word'].lower().strip()
     state = realtime_item['label_name']
     for row in get_db_data():
         if title == row[1] and state == row[2]:
@@ -69,9 +69,9 @@ def filter_item(realtime_item):
         # 名
         "磊 祺 咪 梓 禹 楷 灿",
         # 单字
-        "尸 癌 座 贷 校 疑 骑 厕 臭 车 婴 说 鼠 吻 宿",
+        "尸 癌 座 贷 校 疑 骑 厕 臭 车 婴 说 鼠 吻 宿 悼",
         # 娱乐
-        "女团 娱 艺 剧 恋 乐 毯 逝 赛 歌 舞 演 戏 幼 痘 婚 孕 飒 经纪 网红 公司 解约 解散 维密 首秀 生图 代言 路透 票房 预告 时尚 收官 钓系 镜头",
+        "女团 娱 艺 剧 恋 乐 毯 逝 赛 歌 舞 演 戏 幼 痘 婚 孕 飒 经纪 网红 公司 解约 解散 维密 首秀 生图 代言 路透 票房 预告 时尚 收官 钓系 镜头 亮相",
         "开机 追星 长得 辟谣",
         # 女性
         "妆 面霜 名媛 闺蜜 公主 强奸 猥亵 侵犯 出轨 性侵 美甲 回购 护肤 奶茶",
@@ -84,16 +84,17 @@ def filter_item(realtime_item):
         "比0 比1 比2 比3 比4 比5 比6 比7 比8 比9 乒 四强 八强 战胜 vs 晋级 输",
         "0分 1分 2分 3分 4分 5分 6分 7分 8分 9分",
         "0后 0万",
+        "大一 大二 大三 大四",
         # 英文
-        "chill belike vivo oppo vlog cp mbti 强森 布朗尼 詹姆斯 萨 贝克汉姆",
+        "chill belike vivo oppo iqoo vlog cp mbti 强森 布朗尼 詹姆斯 萨 贝克汉姆",
         # 水
-        "背锅 什么 竟然是 值得 到底 差点 没认出 太香了 杀疯了 再也不 告诉 偶遇 怎么 童年 清华 谁能 是懂 抑郁 情绪 骗 证据 盘点 评论区",
+        "背锅 什么 竟然是 值得 到底 差点 没认出 太香了 杀疯了 再也不 告诉 偶遇 怎么 童年 清华 谁能 是懂 抑郁 情绪 骗 证据 盘点 评论区 原来 了解 心愿",
         # 新闻
-        "预制菜 兼职 救人 爆料 跳楼 骨折 奔现 优惠 套路 柯基 有人",
+        "预制菜 兼职 救人 爆料 跳楼 骨折 奔现 优惠 羊毛 套路 柯基 有人",
     ]
     gameBlackList = [
         # 游戏
-        "光遇 王者 荣耀 炉石 如鸢 秋季赛 第五人格 原神 星穹铁道 kpl jdg 皮肤 抽卡 阵容 回归 uzi 勇士 联盟 战队 九尾 对战",
+        "电竞 和平精英 光遇 王者 荣耀 炉石 如鸢 秋季赛 第五人格 原神 星穹铁道 kpl jdg 皮肤 抽卡 阵容 回归 uzi 勇士 联盟 战队 九尾 对战",
         # 其他
         "海洋 北方 良品铺子",
     ]
