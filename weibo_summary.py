@@ -134,7 +134,6 @@ def word_segment():
 def notify_markdown():
     words = word_segment()
     counts = Counter(words)
-    start_str = ''
     # 获取出现频率最高的3个词且次数>1
     markdown_text = ''
     most_common_words = [(word, count) for word, count in counts.most_common(3) if count > 1]
