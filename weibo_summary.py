@@ -31,11 +31,12 @@ def filter_item(realtime_item):
     if realtime_item.get('is_ad'):
         return False
     title = realtime_item['word']
+    state = realtime_item['label_name']
     for row in get_db_data():
-        if title == row[1]:
+        if title == row[1] and state == row[2]:
             print('重复已忽略')
             return False
-    # print(realtime_item)
+    print(realtime_item)
     nameBlackList = [
         # 演员
         "章子怡 成龙 李连杰 周星驰 郭富城 赵丽颖 王一博 肖战 易烊千玺 王俊凯 王源 鹿晗 吴亦凡 张婧仪 严屹宽",
@@ -99,20 +100,21 @@ def filter_item(realtime_item):
     countryList = [
         "法国 土耳其 印度 中东 瑞士",
     ]
-    print(title)
     if any(word in title for item in nameBlackList for word in item.split()):
+        print("in nameBlackList")
         return False
     if any(word in title for item in gameBlackList for word in item.split()):
+        print("in gameBlackList")
         return False
     if any(word in title for item in countryList for word in item.split()):
+        print("in countryList")
         return False
     print(realtime_item)
     item = {
         'num': realtime_item['realpos'],
         'title': title,
-        'state': realtime_item['label_name'],
+        'state': state,
     }
-    # print(item)
     summary_list.append(item)
 
 
@@ -133,24 +135,25 @@ def word_segment():
 
 
 def notify_markdown():
-    words = word_segment()
-    counts = Counter(words)
-    # 获取出现频率最高的3个词且次数>1
-    markdown_text = ''
-    most_common_words = [(word, count) for word, count in counts.most_common(3) if count > 1]
-    if most_common_words:
-        markdown_text = f'''### {" ".join([f"{word}: {count}" for word, count in most_common_words])}'''
-        print(markdown_text)
-    for item in summary_list:
-        state_mark = f'【{item["state"]}】' if item['state'] else ''
-        markdown_text += f'''
+    if summary_list:
+        words = word_segment()
+        counts = Counter(words)
+        # 获取出现频率最高的3个词且次数>1
+        markdown_text = ''
+        most_common_words = [(word, count) for word, count in counts.most_common(3) if count > 1]
+        if most_common_words:
+            markdown_text = f'''### {" ".join([f"{word}: {count}" for word, count in most_common_words])}'''
+            print(markdown_text)
+        for item in summary_list:
+            state_mark = f'【{item["state"]}】' if item['state'] else ''
+            markdown_text += f'''
 {item['num']}.[{item['title']}](https://m.weibo.cn/search?containerid=231522type%3D1%26q%3D{quote(item['title'])}&_T_WM=16922097837&v_p=42){state_mark}
 '''
-    insert_db(summary_list)
-    # sendNotify.push_me(get_title(), markdown_text, "markdown")
-    sendNotify.push_me(get_title(), markdown_text, "markdata")
-    with open("log_weibo.md", 'w', encoding='utf-8') as f:
-        f.write(markdown_text)
+        insert_db(summary_list)
+        # sendNotify.push_me(get_title(), markdown_text, "markdown")
+        sendNotify.push_me(get_title(), markdown_text, "markdata")
+        with open("log_weibo.md", 'w', encoding='utf-8') as f:
+            f.write(markdown_text)
 
 
 def get_title() -> str:
