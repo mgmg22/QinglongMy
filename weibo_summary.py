@@ -33,9 +33,13 @@ def filter_item(realtime_item):
     title = realtime_item['word'].lower().strip()
     state = realtime_item['label_name']
     for row in get_db_data():
-        if title == row[1] and state == row[2]:
-            print('重复已忽略')
-            return False
+        if title == row[1]:
+            if state == row[2]:
+                print('重复已忽略')
+                return False
+            if row[2] == '热':
+                print('上过热门已忽略')
+                return False
     print(realtime_item)
     nameBlackList = [
         # 演员
@@ -169,8 +173,8 @@ def get_title() -> str:
 def insert_db(list):
     # 使用列表推导式将每个元素转换成元组
     tuples_list = [(x['title'], x['state']) for x in list]
-    # 使用 executemany 来插入多条记录
-    cursor.executemany('INSERT OR IGNORE INTO titles (name, state) VALUES (?, ?)', tuples_list)
+    # 使用 executemany 来插入或替换记录
+    cursor.executemany('INSERT OR REPLACE INTO titles (name, state) VALUES (?, ?)', tuples_list)
     conn.commit()
 
 
