@@ -10,11 +10,6 @@ import pysnowball as ball
 import datetime
 import json
 
-fundFilters = {
-    '酒ETF',
-    '芯片ETF',
-    '证券ETF',
-}
 
 stockFilters = [
     'SH600519',
@@ -60,7 +55,7 @@ def add_xq_increase(symbol):
         print(f"{code}\t{quote['name']}\t{price}")
     except Exception as e:
         # 打印异常信息
-        print(f"An error occurred: {e}")
+        print(f"add_xq_increase An error occurred: {e}")
 
 
 def get_wx_href(code, exchange):
@@ -108,6 +103,7 @@ def add_sw_increase():
             'avg_price': '',
             'href': wx_url + 'plate/200/detail?plateId=01801150',
         })
+        print(f"801150\t医药生物\t{increase}")
 
 
 def notify_with_markdown():
