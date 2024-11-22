@@ -138,7 +138,7 @@ if __name__ == '__main__':
     # https://github.com/uname-yang/pysnowball/issues/1
     r = requests.get("https://xueqiu.com/hq", headers={"user-agent": "Mozilla"})
     t = r.cookies["xq_a_token"]
-    print(t)
+    # print(t)
     ball.set_token(f'xq_a_token={t}')
     add_xq_increase('SH000001')
     add_xq_increase('SZ399808')
