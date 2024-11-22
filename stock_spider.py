@@ -136,10 +136,11 @@ def generate_title() -> str:
 
 if __name__ == '__main__':
     # https://github.com/uname-yang/pysnowball/issues/1
-    r = requests.get("https://xueqiu.com", headers={"user-agent": "Mozilla"})
-    t = r.cookies["xq_a_token"]
+    # r = requests.get("https://xueqiu.com", headers={"user-agent": "Mozilla"})
+    # t = r.cookies["xq_a_token"]
     # print(t)
-    ball.set_token(f'xq_a_token={t}')
+    # ball.set_token(f'xq_a_token={t}')
+    ball.set_token(f'xq_a_token=5209b6a702cf70011c6f5c2d8225d3662fae20de')
     add_xq_increase('SH000001')
     add_xq_increase('SZ399808')
     add_sw_increase()
