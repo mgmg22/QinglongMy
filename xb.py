@@ -47,6 +47,7 @@ def has_black_xyk_name(content):
 
 
 def get_complete_content(content):
+    # print(content)
     text = content.get_text()
     match = re.search(r'http[s]?://\S+…', text)
     if match:
@@ -180,13 +181,15 @@ def get_content(href):
     data = requests.get(href)
     data.encoding = 'utf-8'
     soup = BeautifulSoup(data.text, 'html.parser')
-    xb_content = soup.select('div.genxin')
-    if not xb_content:
-        xb_content = soup.select('#xbcontent > p')
+    xb_content = soup.find('div', id='xbcontent')
     if not xb_content:
         print("获取不到帖子内容")
         return ''
-    return xb_content[0]
+    first_p = xb_content.find('p')
+    # print(first_p)
+    if first_p:
+        return first_p
+    return xb_content
 
 
 def get_top_summary():
