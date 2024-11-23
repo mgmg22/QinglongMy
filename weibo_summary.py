@@ -89,7 +89,9 @@ def filter_item(realtime_item):
         "0集 1集 2集 3集 4集 5集 6集 7集 8集 9集 一集",
         "0后 0万",
         # 其他
-        "海洋 北方 良品铺子 天空 李白 裤",
+        "海洋 北方 良品铺子 天空 李白",
+        # 衣
+        "裤 内衣",
     ]
     countryList = [
         "法国 土耳其 印度 中东 瑞士 印尼 埃及 缅",
@@ -123,7 +125,7 @@ def filter_item(realtime_item):
         "校 清华 浙大 专家 班主任 小学 中学 同学 四六级 师 大一 大二 大三 大四",
         # 水
         "背锅 什么 值得 到底 差点 没认出 太香了 杀疯了 再也不 告诉 偶遇 怎么 童年 谁能 是懂 抑郁 情绪 骗 证据 盘点 评论区 原来 了解 心愿 吗 真正 恶心 智障 离谱",
-        "担心 嘴真严 世上 迟到 歉 简历 副业 狠狠 啥 竟然 仪式 江湖 吧",
+        "担心 嘴真严 世上 迟到 歉 简历 副业 狠狠 啥 竟然 仪式 江湖 吧 人类",
     ]
     if any(word in title for item in nameBlackList for word in item.split()):
         print("in nameBlackList")
