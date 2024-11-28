@@ -78,7 +78,7 @@ def filter_item(realtime_item):
         # 名
         "磊 祺 咪 梓 禹 楷 灿 栩 琦 毓 鑫 莹 豪 琳 帝 俊 楠 婧 娜 皓",
         # 英文
-        "chill belike vivo oppo iqoo vlog cp mbti boy 强森 布朗尼 詹姆斯 萨 贝克汉姆 cos gq love vip star new baby ins",
+        "chill belike vivo oppo iqoo vlog cp mbti boy 强森 布朗尼 詹姆斯 萨 贝克汉姆 cos gq love vip star new baby ins ost",
     ]
     gameBlackList = [
         # 游戏
@@ -110,7 +110,7 @@ def filter_item(realtime_item):
         # 单字
         "座 骑 厕 车 说 宿",
         # 娱乐
-        "女团 娱 艺 剧 恋 乐 毯 逝 赛 歌 舞 演 戏 幼 痘 婚 孕 飒 经纪 网红 公司 解约 解散 维密 首秀 生图 代言 路透 票房 预告 时尚 收官 钓系 镜头 亮相",
+        "女团 娱 艺 剧 恋 乐 毯 逝 赛 唱 歌 舞 演 戏 幼 痘 婚 孕 飒 经纪 网红 公司 解约 解散 维密 首秀 生图 代言 路透 票房 预告 时尚 收官 钓系 镜头 亮相",
         "开机 追星 长得 辟谣 古装 魅 梗 工作室 女装 模仿 影 松弛 耶 顶流 表情 粉 感谢 档 照 合约 续约 资源 摄 组合 咖 幕 男主 见面 配角 大秀 素人 大片 磕",
         # 女性
         "名媛 闺蜜 公主 美甲 回购 护肤 断糖 发色 滤镜 身材 相亲 屁股 腿 脸 媚 吻 依偎 鼻 妃 爱 爽 哄 浪漫 眼 国货 中式 月子 造型 好看 温柔",
