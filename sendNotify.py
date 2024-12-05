@@ -161,8 +161,8 @@ def xb_bot(title: str, content: str) -> None:
     """
     使用 钉钉机器人 推送消息。
     """
-    if not push_config.get("XB_BOT_SECRET") or not push_config.get("XB_BOT_SECRET"):
-        print("钉钉机器人 服务的 XB_BOT_SECRET 或者 DD_BOT_TOKEN 未设置!!\n取消推送")
+    if not push_config.get("XB_BOT_SECRET") or not push_config.get("XB_BOT_TOKEN"):
+        print("钉钉机器人 服务的 XB_BOT_SECRET 或者 XB_BOT_TOKEN 未设置!!\n取消推送")
         return
     print("钉钉机器人 服务启动")
 
