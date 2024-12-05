@@ -71,6 +71,8 @@ push_config = {
     'PUSH_KEY_MY': '',  # server 酱的 PUSH_KEY，兼容旧版与 Turbo 版  我的
     'PUSH_KEY_SECOND': '',  # server 酱的 PUSH_KEY，兼容旧版与 Turbo 版  我的
     'PUSH_ME_KEY': '',  # push.i-i.me的用户令牌
+    'XB_BOT_SECRET': '',  # 钉钉机器人的 SECRET
+    'XB_BOT_TOKEN': '',  # 钉钉机器人的 TOKEN
 }
 notify_function = []
 # fmt: on
