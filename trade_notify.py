@@ -18,8 +18,8 @@ def add_xq_increase(symbol):
         amplitude = quote['amplitude']
         open_price = quote['open']
         title = quote['name']
-        content = (f'''高：{high}    低：{low}
-开：{open_price}    振幅：{amplitude}''')
+        content = (f'''高：{high}    低：{low}    涨幅：{str(quote['percent'])}%
+开：{open_price}    振幅：{amplitude}%''')
         print(content)
         check_and_notify(amplitude, open_price, current, high, low, title, content)
     except Exception as e:
