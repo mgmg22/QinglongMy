@@ -18,10 +18,8 @@ def add_xq_increase(symbol):
         amplitude = quote['amplitude']
         open_price = quote['open']
         title = quote['name']
-        content = (f'''高：{high}
-低：{low}
-开：{open_price}
-振幅：{amplitude}''')
+        content = (f'''高：{high}    低：{low}
+开：{open_price}    振幅：{amplitude}''')
         print(content)
         check_and_notify(amplitude, open_price, current, high, low, title, content)
     except Exception as e:
@@ -37,13 +35,13 @@ def check_and_notify(amplitude, open_price, current, high, low, title, content):
 
 def check_sell_point(open_price, current, high, title, content):
     if current - open_price > 10 and high - current < 5:
-        title = f'[f]卖点:{current} {title}'
+        title = f'[f]{title}卖点:{current}'
         send_notification(title, content)
 
 
 def check_buy_point(open_price, current, low, title, content):
     if open_price - current > 10 and current - low < 3:
-        title = f'[s]买点:{current} {title}'
+        title = f'[s]{title}买点:{current}'
         send_notification(title, content)
 
 
