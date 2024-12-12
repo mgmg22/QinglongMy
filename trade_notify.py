@@ -1,5 +1,5 @@
 """
-cron: 3/5 10-11,1-3 * * 1-5  trade_notify.py
+cron: 1-29 10,11,13,14 * * 1-5  trade_notify.py
 new Env('行情监控');
 """
 import sendNotify
