@@ -1,5 +1,5 @@
 #!/bin/env python3
-# -*- coding: utf-8 -*
+# -*- coding: utf-8 -*-
 """
 cron: 3/30 8/1 * * * xb.py
 new Env('线报0818');
@@ -48,14 +48,21 @@ def has_black_xyk_name(content):
 
 def get_complete_content(content):
     # print(content)
+    # Replace <br/> tags with newline characters before getting text
+    for br in content.find_all('br'):
+        br.replace_with('\n')
     text = content.get_text()
-    match = re.search(r'http[s]?://\S+…', text)
-    if match:
-        a_tag = content.find('a')
-        if a_tag:
-            href = a_tag.get('href')
-            complete_href = f'[{href}]({href})'
-            text = text.replace(match.group(), complete_href)
+    # Find all 'a' tags in the content
+    a_tags = content.find_all('a')
+    for a_tag in a_tags:
+        href = a_tag.get('href')
+        if href:
+            # Get the original text that contains this link
+            original_text = a_tag.get_text()
+            if re.search(r'http[s]?://\S+', original_text):
+                # Replace the original text with markdown format
+                markdown_link = f'[{original_text}]({href})'
+                text = text.replace(original_text, markdown_link)
     return text
 
 
