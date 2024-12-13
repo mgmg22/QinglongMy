@@ -53,7 +53,8 @@ def get_complete_content(content):
     if match:
         a_tag = content.find('a')
         if a_tag:
-            complete_href = a_tag.get('href')
+            href = a_tag.get('href')
+            complete_href = f'[{href}]({href})'
             text = text.replace(match.group(), complete_href)
     return text
 
