@@ -221,7 +221,7 @@ def notify_markdown():
                 markdown_text += f'![]({img})'
         insert_db(xb_list)
         # print_db()
-        sendNotify.dingding_bot(xb_list[0]["title"], markdown_text)
+        sendNotify.xb_bot(xb_list[0]["title"], markdown_text)
         with open("log_xb.md", 'w', encoding='utf-8') as f:
             f.write(markdown_text)
     else:

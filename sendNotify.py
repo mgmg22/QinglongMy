@@ -155,7 +155,6 @@ def dingding_bot(title: str, content: str) -> None:
 
     if not response["errcode"]:
         print("钉钉机器人 推送成功！")
-        xb_bot(title,content)
     else:
         print("钉钉机器人 推送失败！")
 
