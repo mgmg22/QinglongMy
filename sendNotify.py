@@ -158,24 +158,25 @@ def dingding_bot(title: str, content: str) -> None:
     else:
         print("钉钉机器人 推送失败！")
 
-def xb_bot(title: str, content: str) -> None:
+
+def dingding_bot_with_key(title: str, content: str, bot_key: str) -> None:
     """
     使用 钉钉机器人 推送消息。
     """
-    if not push_config.get("XB_BOT_SECRET") or not push_config.get("XB_BOT_TOKEN"):
-        print("钉钉机器人 服务的 XB_BOT_SECRET 或者 XB_BOT_TOKEN 未设置!!\n取消推送")
+    if not push_config.get(bot_key):
+        print("钉钉机器人 服务的 bot_key 未设置!!\n取消推送")
         return
     print("钉钉机器人 服务启动")
 
     timestamp = str(round(time.time() * 1000))
-    secret_enc = push_config.get("XB_BOT_SECRET").encode("utf-8")
-    string_to_sign = "{}\n{}".format(timestamp, push_config.get("XB_BOT_SECRET"))
+    secret_enc = push_config.get(bot_key).encode("utf-8")
+    string_to_sign = "{}\n{}".format(timestamp, bot_key)
     string_to_sign_enc = string_to_sign.encode("utf-8")
     hmac_code = hmac.new(
         secret_enc, string_to_sign_enc, digestmod=hashlib.sha256
     ).digest()
     sign = urllib.parse.quote_plus(base64.b64encode(hmac_code))
-    url = f'https://oapi.dingtalk.com/robot/send?access_token={push_config.get("XB_BOT_TOKEN")}&timestamp={timestamp}&sign={sign}'
+    url = f'https://oapi.dingtalk.com/robot/send?access_token={push_config.get(bot_key)}&timestamp={timestamp}&sign={sign}'
     headers = {"Content-Type": "application/json;charset=utf-8"}
     data = {"msgtype": "markdown", "markdown": {"title": f"{title}", "text": f"{content}"}}
     response = requests.post(
@@ -186,6 +187,7 @@ def xb_bot(title: str, content: str) -> None:
         print("钉钉机器人 推送成功！")
     else:
         print("钉钉机器人 推送失败！")
+
 
 def feishu_bot(title: str, content: str) -> None:
     """
