@@ -10,8 +10,9 @@ import sendNotify
 import sqlite3
 import re
 
+key_name = "xb"
 xb_list = []
-conn = sqlite3.connect('xb.db')
+conn = sqlite3.connect(f'{key_name}.db')
 cursor = conn.cursor()
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS titles (
@@ -221,8 +222,8 @@ def notify_markdown():
                 markdown_text += f'![]({img})'
         insert_db(xb_list)
         # print_db()
-        sendNotify.dingding_bot_with_key(xb_list[0]["title"], markdown_text,"XB_BOT_TOKEN")
-        with open("log_xb.md", 'w', encoding='utf-8') as f:
+        sendNotify.dingding_bot_with_key(xb_list[0]["title"], markdown_text, f"{key_name.upper()}_BOT_TOKEN")
+        with open(f"log_{key_name}.md", 'w', encoding='utf-8') as f:
             f.write(markdown_text)
     else:
         print("暂无线报！！")
