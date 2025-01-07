@@ -10,13 +10,14 @@ import pysnowball as ball
 import datetime
 import json
 
-
 stockFilters = [
     'SH600519',
     'SH603605',
     'SH603444',
-    'SH688111',
+    'SZ000002',
+    'SH600276',
     # etf
+    'SH513100',
     'SH510300',
     'SH512880',
     'SZ164906'
