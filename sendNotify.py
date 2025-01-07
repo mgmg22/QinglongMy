@@ -164,9 +164,9 @@ def dingding_bot_with_key(title: str, content: str, bot_key: str) -> None:
     使用 钉钉机器人 推送消息。
     """
     if not push_config.get(bot_key):
-        print("钉钉机器人 服务的 bot_key 未设置!!\n取消推送")
+        print(f"钉钉机器人{bot_key} 未设置!!\n取消推送")
         return
-    print("钉钉机器人 服务启动")
+    print(f"钉钉机器人{bot_key} 服务启动")
 
     timestamp = str(round(time.time() * 1000))
     secret_enc = push_config.get(bot_key).encode("utf-8")
@@ -184,9 +184,9 @@ def dingding_bot_with_key(title: str, content: str, bot_key: str) -> None:
     ).json()
 
     if not response["errcode"]:
-        print("钉钉机器人 推送成功！")
+        print(f"钉钉机器人{bot_key} 推送成功！")
     else:
-        print("钉钉机器人 推送失败！")
+        print("钉钉机器人{bot_key} 推送失败！")
 
 
 def feishu_bot(title: str, content: str) -> None:
