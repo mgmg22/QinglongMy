@@ -5,8 +5,11 @@
 * [epic_free_game](epic_free_game.py) Epic每周限免信息
 * [stock_spider](stock_spider.py) 获取指数,ETF,个股现价、涨幅、均价等数据推送到微信，支持实时查看行情
 * ~~[stock_detail_activity](stock_detail_activity.py) 获取个股现价与涨幅~~
+* [trade_notify](trade_notify.py) 个股股价提醒
 * [weibo_summary](weibo_summary.py) 微博热搜列表过滤与词频统计
 * [send_qq_email](send_qq_email.py) 发送带附件的电子邮件
+* [job_spider](job_spider.py) 指定过滤条件获取远程工作信息
+
 ## 安装依赖库
    ```shell
    pip3 install -r requirements.txt
@@ -40,6 +43,7 @@ export PUSH_ME_KEY="";
 export EMAIL_ADDRESS="";
 export EMAIL_PWD="";
    ```
+所有新增PUSH_KEY需要在[sendNotify](sendNotify.py)的push_config中配置key名称后才能生效
 
 ## Special statement:
 
