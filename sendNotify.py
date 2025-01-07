@@ -73,6 +73,7 @@ push_config = {
     'PUSH_ME_KEY': '',  # push.i-i.me的用户令牌
     'XB_BOT_SECRET': '',  # 钉钉机器人的 SECRET
     'XB_BOT_TOKEN': '',  # 钉钉机器人的 TOKEN
+    'FLN_BOT_TOKEN': '',  # 钉钉机器人的 TOKEN
 }
 notify_function = []
 # fmt: on
