@@ -3,13 +3,13 @@
 自用青龙脚本库
 
 <a href="screenshots/preview-1.jpg">
-<img src="screenshots/preview-1.jpg" width="200"/>
+<img src="screenshots/preview-1.jpg" width="270"/>
 </a>
 <a href="screenshots/preview-2.jpg">
-<img src="screenshots/preview-2.jpg" width="200"/>
+<img src="screenshots/preview-2.jpg" width="270"/>
 </a>
 <a href="screenshots/preview-3.jpg">
-<img src="screenshots/preview-3.jpg" width="200"/>
+<img src="screenshots/preview-3.jpg" width="270"/>
 </a>
 
 ## 安装依赖库
