@@ -1,17 +1,14 @@
 import os
 import json
 import aiohttp
-from pathlib import Path
-import time
 from dotenv import load_dotenv
+import asyncio
 
 
 class AIHelper:
     def __init__(self):
         # 加载环境变量
         load_dotenv()
-
-        # API配置
         self.api_key = os.getenv('API_KEY')  # 从环境变量获取API密钥
         if not self.api_key:
             raise ValueError("API_KEY 环境变量未设置")
@@ -61,19 +58,19 @@ class AIHelper:
         results = []
         prompt = f"请逐项分析以下内容的价值，在保持所有数据格式不变的前提下，在每一项结尾添加一行数据格式为：「评分1-5分」一句话简要总结的理由\n{content.strip()}"
 
-        for attempt in range(5):  # 尝试最多5次
+        try:
+            score_response = await self.chat_completion(prompt)
+            results.append(score_response)
+        except Exception as e:
+            print(f"调用API时出错: {str(e)}")
+            print("等待 1 分钟后重试...")
+            await asyncio.sleep(60)  # 等待 1 分钟重试
             try:
                 score_response = await self.chat_completion(prompt)
                 results.append(score_response)
-                break  # 成功后跳出重试循环
             except Exception as e:
-                if "429" in str(e):  # 检查是否是429错误
-                    print("请求过于频繁，等待重试...")
-                    time.sleep(2 ** attempt)  # 指数退避
-                else:
-                    print(f"调用API时出错: {str(e)}")
-                    results.append(f"得分结果: 错误 - {str(e)}\n")
-                    break  # 其他错误直接跳出重试循环
+                print(f"重试时出错: {str(e)}")
+                return content  # 直接返回原始内容
 
         # 返回结果字符串
-        return "\n".join(results)
+        return results[0]
