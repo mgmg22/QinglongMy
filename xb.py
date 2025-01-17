@@ -246,11 +246,10 @@ def notify_markdown():
         如果不符合预期请忽略该项，不要返回该项结果，
         符合预期则在保持数据格式不变的前提下，在每一项结尾添加一行数据格式为：
         「评分1-5分」一句话简要总结的理由
-        
         返回前检查：
         1：保持markdown数据格式不要返回其他无关内容
         2：不要返回不符合预期的内容
-        3：自动纠正原始数据中的错别字或字母缩写更方便阅读（zfb vx dy等） 
+        3：自动纠正原始数据中的错别字或字母缩写更方便阅读（zfb vx dy等）
         {markdown_text}'''
         # 调用 score_log_entries 方法并获取返回结果
         markdown_text = asyncio.run(helper.score_log_entries(markdown_text, prompt))
