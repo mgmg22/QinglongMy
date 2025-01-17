@@ -1,0 +1,11 @@
+# 推送通知配置
+PUSH_KEY=               # server酱 push key
+TG_BOT_TOKEN=          # Telegram 机器人 token
+TG_USER_ID=            # Telegram 用户 ID
+DD_BOT_TOKEN=          # 钉钉机器人 token
+DD_BOT_SECRET=         # 钉钉机器人 secret
+# ... 其他配置项 ...
+
+# 是否启用特性
+HITOKOTO=false         # 是否启用一言
+CONSOLE=true          # 是否在控制台输出 

@@ -5,11 +5,23 @@ import hashlib
 import hmac
 import json
 import os
+import sys
+from pathlib import Path
 import threading
 import time
 import urllib.parse
 
 import requests
+
+# 添加对 .env 文件的支持
+try:
+    from dotenv import load_dotenv
+    # 优先尝试加载 .env 文件
+    env_path = Path(__file__).parent / '.env'
+    load_dotenv(env_path)
+except ImportError:
+    print("提示: 可以安装 python-dotenv 来使用 .env 文件功能")
+    pass
 
 # 原先的 print 函数和主线程的锁
 _print = print
