@@ -9,6 +9,8 @@ import requests
 import sendNotify
 import sqlite3
 import re
+import asyncio
+from openai_utils import AIHelper
 
 key_name = "xb"
 xb_list = []
@@ -220,8 +222,14 @@ def notify_markdown():
 '''
             for img in item['src_list']:
                 markdown_text += f'![]({img})'
+
         insert_db(xb_list)
         # print_db()
+        # 创建 AIHelper 实例
+        helper = AIHelper()
+        # 调用 score_log_entries 方法并获取返回结果
+        markdown_text = asyncio.run(helper.score_log_entries(markdown_text))  # 传入 markdown_text
+        # 发送通知
         sendNotify.dingding_bot_with_key(xb_list[0]["title"], markdown_text, f"{key_name.upper()}_BOT_TOKEN")
         sendNotify.dingding_bot_with_key(xb_list[0]["title"], markdown_text, "FLN_BOT_TOKEN")
         with open(f"log_{key_name}.md", 'w', encoding='utf-8') as f:

@@ -1,11 +1,9 @@
 import os
 import json
-import asyncio
 import aiohttp
 from pathlib import Path
-from typing import Dict, Optional
-from dotenv import load_dotenv
 import time
+from dotenv import load_dotenv
 
 
 class AIHelper:
@@ -21,9 +19,6 @@ class AIHelper:
         self.base_url = os.getenv('API_URL')  # 从环境变量获取API URL
         if not self.base_url:
             raise ValueError("API_URL 环境变量未设置")
-
-        # 使用当前目录
-        self.current_dir = Path.cwd()
 
     async def chat_completion(self, prompt: str, model: str = "gemini-2.0-flash-exp") -> str:
         # 调用API进行对话
@@ -62,18 +57,8 @@ class AIHelper:
             print(f"调用API时出错: {str(e)}")
             raise
 
-    async def score_log_entries(self, input_filename: str = 'log_xb.md', output_filename: str = 'scores.md') -> Optional[Dict]:
-        # 读取 log_xb.md 文件内容
-        try:
-            with open(input_filename, 'r', encoding='utf-8') as f:
-                content = f.read()  # 一次性读取整个文件内容
-        except Exception as e:
-            print(f"读取文件时出错: {str(e)}")
-            return None
-
+    async def score_log_entries(self, content: str) -> str:
         results = []
-
-        # 构建提示，要求 AI 按每一项进行打分
         prompt = f"请逐项分析以下内容的价值，在保持所有数据格式不变的前提下，在每一项结尾添加一行数据格式为：「评分1-5分」一句话简要总结的理由\n{content.strip()}"
 
         for attempt in range(5):  # 尝试最多5次
@@ -90,21 +75,5 @@ class AIHelper:
                     results.append(f"得分结果: 错误 - {str(e)}\n")
                     break  # 其他错误直接跳出重试循环
 
-        # 保存结果到新的 Markdown 文件
-        output_path = self.current_dir / output_filename
-        try:
-            with open(output_path, 'w', encoding='utf-8') as f:
-                f.writelines(results)
-            print(f"打分结果已写入文件: {output_path}")
-        except Exception as e:
-            print(f"写入文件时出错: {str(e)}")
-
-        return results
-
-
-async def main():
-    helper = AIHelper()
-    await helper.score_log_entries()
-
-if __name__ == "__main__":
-    asyncio.run(main())
+        # 返回结果字符串
+        return "\n".join(results)

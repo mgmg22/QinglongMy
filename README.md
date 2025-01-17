@@ -52,6 +52,10 @@ export PUSH_ME_KEY="";
 ## qq邮箱地址和smtp密钥
 export EMAIL_ADDRESS="";
 export EMAIL_PWD="";
+
+## gemini key和url
+export API_KEY="";
+export API_URL="";
    ```
 所有新增PUSH_KEY需要在[sendNotify](sendNotify.py)的push_config中配置key名称后才能生效
 
