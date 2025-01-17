@@ -125,7 +125,7 @@ lowBlackList = [word for item in [
     # ----饮料----
     "饮料 果汁 百岁山 农夫 矿泉水 茅台 酒 窖 特仑苏 椰子 茶叶 观音 奶茶 coco 奈雪 蜜雪 茶百道 古茗 库迪",
     # ----美妆个护----
-    "珀莱雅 雅诗兰黛 毛戈平 屈臣氏 大宝 金纺 立白 科颜氏 林清轩 欧莱雅 苏菲 蔻 洗 眉 唇 泥 日抛 护理 采销 卫生 敏感肌 美妆蛋 保湿 美白 防晒 精粹 海蓝 口罩 olay",
+    "珀莱雅 雅诗兰黛 毛戈平 潘婷 屈臣氏 大宝 金纺 立白 科颜氏 林清轩 欧莱雅 苏菲 蔻 洗 眉 唇 泥 日抛 护理 采销 卫生 敏感肌 美妆蛋 保湿 美白 防晒 精粹 海蓝 口罩 olay",
     # ----其他实物----
     "佛 机油 宠物 翡翠 轮胎 图书 小家电",
     # ----品牌----
@@ -223,12 +223,37 @@ def notify_markdown():
             for img in item['src_list']:
                 markdown_text += f'![]({img})'
 
-        insert_db(xb_list)
-        # print_db()
         # 创建 AIHelper 实例
         helper = AIHelper()
+        prompt = f'''你擅长对内容进行筛选和分析，请逐项分析以下内容的价值，
+        符合预期的内容包括：
+        1. 羊毛活动
+        2. 优惠活动
+        3. 红包或现金活动
+        4. 虚拟卡券
+        5. 便宜商品
+        6. 京东活动
+        7. 这些银行的无地区限制活动(
+        仅限借记卡["中国银行","中行","农业银行","交通银行","浦发","邮储","邮政","光大","兴业","平安","浙商","杭州银行","北京银行", "宁波银行"]，
+        借记卡和信用卡[工商银行 工行 工银 e生活 建设银行 建融 招商银行 掌上生活 中信])
+        不符合预期的内容包括：
+        1. 闲聊灌水
+        2. 吐槽
+        3. 美妆个护商品
+        4. 限定地区活动（上海、深圳、北京、天津、重庆）注意"上海交通卡"是全国通用的活动
+        5. 提问或求助帖(买什么 买那个)
+        6. 部分银行信用卡活动["中国银行", "中行", "农业银行", "农行", "交通银行", "交行", "浦发", "邮储", "邮政", "光大", "兴业","平安", "浙商", "杭州银行", "北京银行", "宁波银行"]
+        如果不符合预期请忽略该项，不要返回该项结果，
+        符合预期则在保持数据格式不变的前提下，在每一项结尾添加一行数据格式为：
+        「评分1-5分」一句话简要总结的理由
+        
+        返回前检查：
+        1：保持markdown数据格式不要返回其他无关内容
+        2：不要返回不符合预期的内容
+        3：自动纠正原始数据中的错别字或字母缩写更方便阅读（zfb vx dy等） 
+        {markdown_text}'''
         # 调用 score_log_entries 方法并获取返回结果
-        markdown_text = asyncio.run(helper.score_log_entries(markdown_text))  # 传入 markdown_text
+        markdown_text = asyncio.run(helper.score_log_entries(markdown_text, prompt))
         # 发送通知
         sendNotify.dingding_bot_with_key(xb_list[0]["title"], markdown_text, f"{key_name.upper()}_BOT_TOKEN")
         sendNotify.dingding_bot_with_key(xb_list[0]["title"], markdown_text, "FLN_BOT_TOKEN")

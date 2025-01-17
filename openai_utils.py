@@ -54,10 +54,8 @@ class AIHelper:
             print(f"调用API时出错: {str(e)}")
             raise
 
-    async def score_log_entries(self, content: str) -> str:
+    async def score_log_entries(self, content: str, prompt: str) -> str:
         results = []
-        prompt = f"请逐项分析以下内容的价值，在保持所有数据格式不变的前提下，在每一项结尾添加一行数据格式为：「评分1-5分」一句话简要总结的理由\n{content.strip()}"
-
         try:
             score_response = await self.chat_completion(prompt)
             results.append(score_response)
