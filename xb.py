@@ -223,7 +223,8 @@ def notify_markdown():
             for img in item['src_list']:
                 markdown_text += f'![]({img})'
 
-        # 创建 AIHelper 实例
+        insert_db(xb_list)
+        # print_db()
         helper = AIHelper()
         prompt = f'''你擅长对内容进行筛选和分析，请逐项分析以下内容的价值，
         符合预期的内容包括：
@@ -236,6 +237,7 @@ def notify_markdown():
         7. 这些银行的无地区限制活动(
         仅限借记卡["中国银行","中行","农业银行","交通银行","浦发","邮储","邮政","光大","兴业","平安","浙商","杭州银行","北京银行", "宁波银行"]，
         借记卡和信用卡[工商银行 工行 工银 e生活 建设银行 建融 招商银行 掌上生活 中信])
+        8. 带有二维码的图片
         不符合预期的内容包括：
         1. 闲聊灌水
         2. 吐槽
@@ -251,8 +253,7 @@ def notify_markdown():
         2：不要返回不符合预期的内容
         3：自动纠正原始数据中的错别字或字母缩写更方便阅读（zfb vx dy等）
         {markdown_text}'''
-        # 调用 score_log_entries 方法并获取返回结果
-        markdown_text = asyncio.run(helper.score_log_entries(markdown_text, prompt))
+        markdown_text = asyncio.run(helper.analyze_content(markdown_text, prompt))
         # 发送通知
         sendNotify.dingding_bot_with_key(xb_list[0]["title"], markdown_text, f"{key_name.upper()}_BOT_TOKEN")
         sendNotify.dingding_bot_with_key(xb_list[0]["title"], markdown_text, "FLN_BOT_TOKEN")

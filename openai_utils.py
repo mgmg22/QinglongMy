@@ -54,7 +54,7 @@ class AIHelper:
             print(f"调用API时出错: {str(e)}")
             raise
 
-    async def score_log_entries(self, content: str, prompt: str) -> str:
+    async def analyze_content(self, content: str, prompt: str) -> str:
         results = []
         try:
             score_response = await self.chat_completion(prompt)
