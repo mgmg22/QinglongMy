@@ -284,11 +284,11 @@ def send_wx_push(summary: str, markdown_text: str):
     topic_id = None
     if is_product_env():
         topic_id = os.getenv(f'{key_name}_topic')
-        test_uid = [os.getenv(f'yun_uid')]
+        uid = [os.getenv(f'yun_uid')]
     else:
-        test_uid = [os.getenv(f'test_uid'), os.getenv(f'yun_uid')]
+        uid = [os.getenv(f'test_uid')]
     summary = f'测试消息：{summary}'
-    return send_wxpusher_html_message(summary=summary, content=html_content, topic_id=topic_id, uids=test_uid)
+    return send_wxpusher_html_message(summary=summary, content=html_content, topic_id=topic_id, uids=uid)
 
 
 def extract_first_title(text):
