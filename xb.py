@@ -11,6 +11,11 @@ import sqlite3
 import re
 import asyncio
 from openai_utils import AIHelper
+import json
+from md_util import markdown_to_html
+import os
+from dotenv import load_dotenv
+from wxpush_sendNotify import send_wxpusher_html_message
 
 key_name = "xb"
 xb_list = []
@@ -23,6 +28,9 @@ cursor.execute('''
         href TEXT NOT NULL
     )
     ''')
+
+load_dotenv()
+DONT_INSERT_DB = os.getenv('DONT_INSERT_DB', 'False')
 
 cxkWhiteList = ["中国银行", "中行", "农业银行", "农行", "交通银行", "交行", "浦发", "邮储", "邮政", "光大", "兴业",
                 "平安", "浙商", "杭州银行", "北京银行", "宁波银行"]
@@ -223,7 +231,8 @@ def notify_markdown():
             for img in item['src_list']:
                 markdown_text += f'![]({img})'
 
-        insert_db(xb_list)
+        if DONT_INSERT_DB.lower() != 'true':
+            insert_db(xb_list)
         # print_db()
         helper = AIHelper()
         prompt = f'''你擅长对内容进行筛选和分析，请逐项分析以下内容的价值，
@@ -257,6 +266,13 @@ def notify_markdown():
 3. 自动纠正原始数据中的错别字或字母缩写更方便阅读(zfb vx dy等)
 {markdown_text}'''
         markdown_text = asyncio.run(helper.analyze_content(markdown_text, prompt))
+        html_content = markdown_to_html(markdown_text)
+        wxPush = send_wxpusher_html_message(summary=xb_list[0]["title"], content=html_content, uids=os.getenv('uids'))
+        if wxPush:
+            print("wxPush消息发送成功:")
+            print(json.dumps(wxPush, indent=4, ensure_ascii=False))
+        else:
+            print("wxPush消息发送失败")
         # 发送通知
         sendNotify.dingding_bot_with_key(xb_list[0]["title"], markdown_text, f"{key_name.upper()}_BOT_TOKEN")
         sendNotify.dingding_bot_with_key(xb_list[0]["title"], markdown_text, "FLN_BOT_TOKEN")
