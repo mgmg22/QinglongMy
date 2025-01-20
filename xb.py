@@ -276,8 +276,7 @@ def notify_markdown():
             else:
                 test_uid = os.getenv(f'test_uid')
                 summary = f'测试消息：{summary}'
-            wxPush = send_wxpusher_html_message(summary=summary, content=html_content,
-                                                topic_id=topic_id, uids=test_uid)
+            wxPush = send_wxpusher_html_message(summary=summary, content=html_content, topic_id=topic_id, uids=test_uid)
             if wxPush:
                 print("wxPush消息发送成功:")
                 print(json.dumps(wxPush, indent=4, ensure_ascii=False))
