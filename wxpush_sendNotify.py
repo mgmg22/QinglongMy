@@ -1,6 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
+from typing import List, Optional
 import json
 
 load_dotenv()
@@ -8,7 +9,8 @@ WX_URL = os.getenv('WX_URL')
 WX_TOKEN = os.getenv('WX_TOKEN')
 
 
-def send_wxpusher_html_message(summary: str, content: str, topic_id: str = None, uids: str = None, url=None):
+def send_wxpusher_html_message(summary: str, content: str, topic_id: str = None, uids: Optional[List[str]] = None,
+                               url=None):
     payload = {
         "appToken": WX_TOKEN,
         "summary": summary,
@@ -19,7 +21,7 @@ def send_wxpusher_html_message(summary: str, content: str, topic_id: str = None,
     if topic_id:
         payload["topicIds"] = [int(topic_id)]
     if uids:
-        payload["uids"] = [uids]
+        payload["uids"] = uids
     if url:
         payload["url"] = url
     headers = {
