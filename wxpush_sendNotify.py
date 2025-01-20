@@ -27,8 +27,11 @@ def send_wxpusher_html_message(summary: str, content: str, topic_id: str = None,
     }
     try:
         response = requests.post(WX_URL, headers=headers, data=json.dumps(payload))
-        response.raise_for_status()  # 如果请求失败，会抛出异常
-        return response.json()
+        response.raise_for_status()
+        json_response = response.json()
+        if json_response.get("success"):
+            return f"wxPush成功"
+        else:
+            return f"wxPush失败: {json_response.get('data')}"
     except requests.exceptions.RequestException as e:
-        print(f"请求错误: {e}")
-        return None
+        return f"wxPush请求错误: {e}"

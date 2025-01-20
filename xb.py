@@ -11,7 +11,6 @@ import sqlite3
 import re
 import asyncio
 from openai_utils import AIHelper
-import json
 from md_util import markdown_to_html
 import os
 from dotenv import load_dotenv
@@ -267,22 +266,9 @@ def notify_markdown():
 {markdown_text}'''
         markdown_text = asyncio.run(helper.analyze_content(markdown_text, prompt))
         if markdown_text:
-            html_content = markdown_to_html(markdown_text)
             summary = extract_first_title(markdown_text)
-            topic_id = None
-            test_uid = None
-            if is_product_env():
-                topic_id = os.getenv(f'{key_name}_topic')
-            else:
-                test_uid = os.getenv(f'test_uid')
-                summary = f'测试消息：{summary}'
-            wxPush = send_wxpusher_html_message(summary=summary, content=html_content, topic_id=topic_id, uids=test_uid)
-            if wxPush:
-                print("wxPush消息发送成功:")
-                print(json.dumps(wxPush, indent=4, ensure_ascii=False))
-            else:
-                print("wxPush消息发送失败")
             # 发送通知
+            markdown_text += send_wx_push(summary, markdown_text)
             sendNotify.dingding_bot_with_key(summary, markdown_text, f"{key_name.upper()}_BOT_TOKEN")
             sendNotify.dingding_bot_with_key(summary, markdown_text, "FLN_BOT_TOKEN")
             with open(f"log_{key_name}.md", 'w', encoding='utf-8') as f:
@@ -291,6 +277,18 @@ def notify_markdown():
             print("暂无筛选线报！！")
     else:
         print("暂无线报！！")
+
+
+def send_wx_push(summary: str, markdown_text: str):
+    html_content = markdown_to_html(markdown_text)
+    topic_id = None
+    test_uid = None
+    if is_product_env():
+        topic_id = os.getenv(f'{key_name}_topic')
+    else:
+        test_uid = os.getenv(f'test_uid')
+        summary = f'测试消息：{summary}'
+    return send_wxpusher_html_message(summary=summary, content=html_content, topic_id=topic_id, uids=test_uid)
 
 
 def extract_first_title(text):
