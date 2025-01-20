@@ -8,13 +8,13 @@ WX_URL = os.getenv('WX_URL')
 WX_TOKEN = os.getenv('WX_TOKEN')
 
 
-def send_wxpusher_html_message(summary: str, content: str, topic_id: str = None, uids: str = None, url=None, verify=0):
+def send_wxpusher_html_message(summary: str, content: str, topic_id: str = None, uids: str = None, url=None):
     payload = {
         "appToken": WX_TOKEN,
         "summary": summary,
         "content": content,
         "contentType": 2,  # 设置为 HTML
-        "verifyPayType": verify  # 1:只发送给付费的用户，2:只发送给未订阅或者订阅过期的用户. Defaults to 0.
+        "verifyPayType": 1  # 1:只发送给付费的用户，2:只发送给未订阅或者订阅过期的用户. Defaults to 0.
     }
     if topic_id:
         payload["topicIds"] = [int(topic_id)]
