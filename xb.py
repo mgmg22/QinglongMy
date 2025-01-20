@@ -30,7 +30,7 @@ cursor.execute('''
     ''')
 
 load_dotenv()
-DONT_INSERT_DB = os.getenv('DONT_INSERT_DB', 'False')
+DONT_INSERT_DB = os.getenv('DONT_INSERT_DB', 'false').lower()
 
 cxkWhiteList = ["中国银行", "中行", "农业银行", "农行", "交通银行", "交行", "浦发", "邮储", "邮政", "光大", "兴业",
                 "平安", "浙商", "杭州银行", "北京银行", "宁波银行"]
@@ -231,7 +231,7 @@ def notify_markdown():
             for img in item['src_list']:
                 markdown_text += f'![]({img})'
 
-        if DONT_INSERT_DB.lower() != 'true':
+        if is_product_env():
             insert_db(xb_list)
         # print_db()
         helper = AIHelper()
@@ -263,24 +263,47 @@ def notify_markdown():
 返回前检查：
 1. 保持markdown数据格式不要返回其他无关内容
 2. 不要返回不符合预期的内容
-3. 自动纠正原始数据中的错别字或字母缩写更方便阅读(zfb vx dy等)
+3. 自动纠正原始数据中的错别字或字母缩写更方便阅读(zfb vx v.x dy等)
 {markdown_text}'''
         markdown_text = asyncio.run(helper.analyze_content(markdown_text, prompt))
-        html_content = markdown_to_html(markdown_text)
-        wxPush = send_wxpusher_html_message(summary=xb_list[0]["title"], content=html_content,
-                                            topic_ids=int(os.getenv('xb_topic')))
-        if wxPush:
-            print("wxPush消息发送成功:")
-            print(json.dumps(wxPush, indent=4, ensure_ascii=False))
+        if markdown_text:
+            html_content = markdown_to_html(markdown_text)
+            summary = extract_first_title(markdown_text)
+            topic_id = None
+            test_uid = None
+            if is_product_env():
+                topic_id = os.getenv(f'{key_name}_topic')
+            else:
+                test_uid = os.getenv(f'test_uid')
+                summary = f'测试消息：{summary}'
+            wxPush = send_wxpusher_html_message(summary=summary, content=html_content,
+                                                topic_id=topic_id, uids=test_uid)
+            if wxPush:
+                print("wxPush消息发送成功:")
+                print(json.dumps(wxPush, indent=4, ensure_ascii=False))
+            else:
+                print("wxPush消息发送失败")
+            # 发送通知
+            sendNotify.dingding_bot_with_key(summary, markdown_text, f"{key_name.upper()}_BOT_TOKEN")
+            sendNotify.dingding_bot_with_key(summary, markdown_text, "FLN_BOT_TOKEN")
+            with open(f"log_{key_name}.md", 'w', encoding='utf-8') as f:
+                f.write(markdown_text)
         else:
-            print("wxPush消息发送失败")
-        # 发送通知
-        sendNotify.dingding_bot_with_key(xb_list[0]["title"], markdown_text, f"{key_name.upper()}_BOT_TOKEN")
-        sendNotify.dingding_bot_with_key(xb_list[0]["title"], markdown_text, "FLN_BOT_TOKEN")
-        with open(f"log_{key_name}.md", 'w', encoding='utf-8') as f:
-            f.write(markdown_text)
+            print("暂无筛选线报！！")
     else:
         print("暂无线报！！")
+
+
+def extract_first_title(text):
+    match = re.search(r'#####\s*\[\d{1,2}:\d{2}\s*(.*?)\]', text)
+    if match:
+        return match.group(1).strip()
+    else:
+        return ''
+
+
+def is_product_env():
+    return DONT_INSERT_DB != 'true'
 
 
 def insert_db(list):
