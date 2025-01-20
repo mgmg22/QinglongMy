@@ -1,6 +1,7 @@
 """
 cron: 1-29 10,11,13,14 * * 1-5  trade_notify.py
 new Env('行情监控');
+雪球API:https://github.com/uname-yang/pysnowball
 """
 import sendNotify
 import requests
