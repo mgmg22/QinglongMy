@@ -8,7 +8,7 @@ WX_URL = os.getenv('WX_URL')
 WX_TOKEN = os.getenv('WX_TOKEN')
 
 
-def send_wxpusher_html_message(summary: str, content: str, topic_ids: str = None, uids: str = None, url=None, verify_pay_type=0):
+def send_wxpusher_html_message(summary: str, content: str, topic_ids: int = None, uids: str = None, url=None, verify_pay_type=0):
     """
     使用 WxPusher API 发送 HTML 消息。
 
@@ -33,7 +33,7 @@ def send_wxpusher_html_message(summary: str, content: str, topic_ids: str = None
         "verifyPayType": verify_pay_type
     }
     if topic_ids:
-        payload["topic_ids"] = topic_ids
+        payload["topicIds"] = [topic_ids]
     if uids:
         payload["uids"] = [uids]
     if url:

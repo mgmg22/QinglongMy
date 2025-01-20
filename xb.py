@@ -267,7 +267,8 @@ def notify_markdown():
 {markdown_text}'''
         markdown_text = asyncio.run(helper.analyze_content(markdown_text, prompt))
         html_content = markdown_to_html(markdown_text)
-        wxPush = send_wxpusher_html_message(summary=xb_list[0]["title"], content=html_content, uids=os.getenv('uids'))
+        wxPush = send_wxpusher_html_message(summary=xb_list[0]["title"], content=html_content,
+                                            topic_ids=int(os.getenv('xb_topic')))
         if wxPush:
             print("wxPush消息发送成功:")
             print(json.dumps(wxPush, indent=4, ensure_ascii=False))
