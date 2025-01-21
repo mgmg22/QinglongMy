@@ -233,6 +233,8 @@ def notify_markdown():
 
         if is_product_env():
             insert_db(xb_list)
+        with open(f"log_{key_name}.md", 'w', encoding='utf-8') as f:
+            f.write(markdown_text)
         helper = AIHelper()
         prompt = f'''你擅长对内容进行筛选和分析，请逐项分析以下内容的价值，
 符合预期的内容包括：
@@ -272,7 +274,8 @@ def notify_markdown():
             dingding_bot_with_key(summary, markdown_text, f"{key_name.upper()}_BOT_TOKEN")
             if is_product_env():
                 dingding_bot_with_key(summary, markdown_text, "FLN_BOT_TOKEN")
-            with open(f"log_{key_name}.md", 'w', encoding='utf-8') as f:
+            with open(f"log_{key_name}.md", 'a', encoding='utf-8') as f:
+                f.write("\n====================================================================================\n")
                 f.write(markdown_text)
         else:
             print("暂无筛选线报！！")
