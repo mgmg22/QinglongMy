@@ -286,6 +286,7 @@ def notify_markdown():
 
 def send_wx_push(summary: str, markdown_text: str):
     html_content = markdown_to_html(markdown_text)
+    # print(html_content)
     uid = [os.getenv('admin_uid')]
     if is_product_env():
         uid.append(os.getenv('yun_uid'))
