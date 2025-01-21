@@ -7,6 +7,8 @@ new Env('远程工作');
 import requests
 import sendNotify
 import sqlite3
+import os
+from dotenv import load_dotenv
 
 key_name = "job"
 summary_list = []
@@ -19,6 +21,7 @@ cursor.execute('''
         state TEXT NOT NULL
     )
     ''')
+load_dotenv()
 
 
 def filter_item(job_item):
@@ -65,7 +68,7 @@ def notify_markdown():
 {item["state"]}
 '''
         insert_db(summary_list)
-        sendNotify.dingding_bot_with_key("job", markdown_text, f"{key_name.upper()}_BOT_TOKEN")
+        sendNotify.dingding_bot_with_token("job", markdown_text, os.getenv(f"{key_name.upper()}_BOT_TOKEN"))
         with open(f"log_{key_name}.md", 'w', encoding='utf-8') as f:
             f.write(markdown_text)
     else:

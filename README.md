@@ -62,7 +62,7 @@ export API_URL="";
 ## WxPusher
 export WX_PUSH_TOKEN="";
    ```
-所有新增PUSH_KEY需要在[sendNotify](sendNotify.py)的push_config中配置key名称后才能生效
+若没有使用load_dotenv()，所有新增PUSH_KEY需要在[sendNotify](sendNotify.py)的push_config中配置key名称后才能生效
 
 ## 本地开发
   复制 .env.example 为 .env 并填写配置

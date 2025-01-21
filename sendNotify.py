@@ -16,6 +16,7 @@ import requests
 # 添加对 .env 文件的支持
 try:
     from dotenv import load_dotenv
+
     # 优先尝试加载 .env 文件
     env_path = Path(__file__).parent / '.env'
     load_dotenv(env_path)
@@ -83,10 +84,6 @@ push_config = {
     'PUSH_KEY_MY': '',  # server 酱的 PUSH_KEY，兼容旧版与 Turbo 版  我的
     'PUSH_KEY_SECOND': '',  # server 酱的 PUSH_KEY，兼容旧版与 Turbo 版  我的
     'PUSH_ME_KEY': '',  # push.i-i.me的用户令牌
-    'XB_BOT_SECRET': '',  # 钉钉机器人的 SECRET
-    'XB_BOT_TOKEN': '',  # 钉钉机器人的 TOKEN
-    'FLN_BOT_TOKEN': '',  # 钉钉机器人的 TOKEN
-    'JOB_BOT_TOKEN': '',  # 钉钉机器人的 TOKEN
 }
 notify_function = []
 # fmt: on
@@ -173,34 +170,24 @@ def dingding_bot(title: str, content: str) -> None:
         print("钉钉机器人 推送失败！")
 
 
-def dingding_bot_with_key(title: str, content: str, bot_key: str) -> None:
-    """
-    使用 钉钉机器人 推送消息。
-    """
-    if not push_config.get(bot_key):
-        print(f"钉钉机器人{bot_key} 未设置!!\n取消推送")
-        return
-    print(f"钉钉机器人{bot_key} 服务启动")
-
+def dingding_bot_with_token(title: str, content: str, bot_token: str) -> None:
     timestamp = str(round(time.time() * 1000))
-    secret_enc = push_config.get(bot_key).encode("utf-8")
-    string_to_sign = "{}\n{}".format(timestamp, bot_key)
+    string_to_sign = "{}\n{}".format(timestamp, bot_token)
     string_to_sign_enc = string_to_sign.encode("utf-8")
     hmac_code = hmac.new(
-        secret_enc, string_to_sign_enc, digestmod=hashlib.sha256
+        bot_token.encode("utf-8"), string_to_sign_enc, digestmod=hashlib.sha256
     ).digest()
     sign = urllib.parse.quote_plus(base64.b64encode(hmac_code))
-    url = f'https://oapi.dingtalk.com/robot/send?access_token={push_config.get(bot_key)}&timestamp={timestamp}&sign={sign}'
+    url = f'https://oapi.dingtalk.com/robot/send?access_token={bot_token}&timestamp={timestamp}&sign={sign}'
     headers = {"Content-Type": "application/json;charset=utf-8"}
     data = {"msgtype": "markdown", "markdown": {"title": f"{title}", "text": f"{content}"}}
     response = requests.post(
         url=url, data=json.dumps(data), headers=headers, timeout=15
     ).json()
-
     if not response["errcode"]:
-        print(f"钉钉机器人{bot_key} 推送成功！")
+        print(f"钉钉机器人{bot_token} 推送成功！")
     else:
-        print("钉钉机器人{bot_key} 推送失败！")
+        print(f"钉钉机器人{bot_token} 推送失败！")
 
 
 def feishu_bot(title: str, content: str) -> None:

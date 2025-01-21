@@ -25,7 +25,7 @@ def send_wxpusher_html_message(summary: str, content: str, topic_id: int, uids: 
     headers = {
         "Content-Type": "application/json"
     }
-    print(payload)
+    # print(payload)
     try:
         response = requests.post('https://wxpusher.zjiecode.com/api/send/message', headers=headers,
                                  data=json.dumps(payload))

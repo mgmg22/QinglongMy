@@ -273,8 +273,10 @@ def notify_markdown():
             summary = extract_first_title(markdown_text)
             # 发送通知
             markdown_text += send_wx_push(summary, markdown_text)
-            sendNotify.dingding_bot_with_key(summary, markdown_text, f"{key_name.upper()}_BOT_TOKEN")
-            sendNotify.dingding_bot_with_key(summary, markdown_text, "FLN_BOT_TOKEN")
+            sendNotify.dingding_bot_with_token(summary, markdown_text,
+                                               os.getenv(f"{key_name.upper()}_BOT_TOKEN"))
+            if is_product_env():
+                sendNotify.dingding_bot_with_token(summary, markdown_text, os.getenv("FLN_BOT_TOKEN"))
             with open(f"log_{key_name}.md", 'w', encoding='utf-8') as f:
                 f.write(markdown_text)
         else:
