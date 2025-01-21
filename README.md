@@ -19,7 +19,7 @@
 * [weibo_summary](weibo_summary.py) 抓取微博热搜榜，Sqlite数据库去重，过滤一些不感兴趣的内容，简单的词频分析
 * [send_qq_email](send_qq_email.py) 发送带附件的电子邮件
 * [job_spider](job_spider.py) 指定过滤条件获取远程工作信息
-* [xb](xb.py) 全网羊毛线报精选
+* [xb](xb.py) 全网羊毛线报精选，使用 gemini-2.0-flash-exp 模型进行内容分析
 
 ## 安装依赖库
    ```shell
@@ -38,7 +38,7 @@
 
 [wxpusher](https://wxpusher.zjiecode.com/admin/main/message/send) 
 
-[gemini API 密钥申请](https://aistudio.google.com/app/apikey) 
+[Gemini API密钥](https://aistudio.google.com/app/apikey) 
 
 
 钉钉群机器人
@@ -62,7 +62,7 @@ export EMAIL_PWD=
 export XB_BOT_TOKEN=
 export JOB_BOT_TOKEN=
 
-## gemini API密钥和API域名
+## Gemini API密钥和API域名
 export API_KEY=
 export API_URL=
 
