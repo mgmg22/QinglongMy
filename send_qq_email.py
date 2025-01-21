@@ -1,5 +1,5 @@
 """
-cron: 00 35 23 * * 7  send_qq_email.py
+cron: 00 15 1 * * 7  send_qq_email.py
 new Env('qq邮件');
 """
 import os
