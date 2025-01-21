@@ -19,6 +19,7 @@
 * [weibo_summary](weibo_summary.py) 抓取微博热搜榜，Sqlite数据库去重，过滤一些不感兴趣的内容，简单的词频分析
 * [send_qq_email](send_qq_email.py) 发送带附件的电子邮件
 * [job_spider](job_spider.py) 指定过滤条件获取远程工作信息
+* [xb](xb.py) 全网羊毛线报精选
 
 ## 安装依赖库
    ```shell
@@ -35,7 +36,8 @@
 
 [PushMe](https://push.i-i.me/) 
 
-[wxpusher](https://wxpusher.zjiecode.com/api/qrcode/QVhvo5InR3Kl1MPqRBE2woggjXCgdwSUFeskT4EJ9ZwEmjhnfse8389dhplE8udH.jpg) 
+[wxpusher](https://wxpusher.zjiecode.com/admin/main/message/send) 
+
 
 钉钉群机器人
 ## 配置文件
@@ -66,6 +68,9 @@ export WX_PUSH_TOKEN="";
 
 ## 本地开发
   复制 .env.example 为 .env 并填写配置
+
+## 全网羊毛线报精选-微信订阅
+![](https://wxpusher.zjiecode.com/api/qrcode/CeSPArVFNdJlGE2lmebXUKTQZTEY3ed8luFzGQ61Ko8H39eBhEhnwvSCNKuFBJqn.jpg)
 
 ## Special statement:
 
