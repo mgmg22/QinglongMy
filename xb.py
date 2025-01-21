@@ -30,7 +30,7 @@ cursor.execute('''
     ''')
 
 load_dotenv()
-DONT_INSERT_DB = os.getenv('DONT_INSERT_DB', 'false').lower()
+IS_LOCAL_DEV = os.getenv('IS_LOCAL_DEV', 'false').lower()
 
 cxkWhiteList = ["中国银行", "中行", "农业银行", "农行", "交通银行", "交行", "浦发", "邮储", "邮政", "光大", "兴业",
                 "平安", "浙商", "杭州银行", "北京银行", "宁波银行"]
@@ -304,7 +304,7 @@ def extract_first_title(text):
 
 
 def is_product_env():
-    return DONT_INSERT_DB != 'true'
+    return IS_LOCAL_DEV != 'true'
 
 
 def insert_db(list):
