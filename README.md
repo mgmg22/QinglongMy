@@ -38,6 +38,8 @@
 
 [wxpusher](https://wxpusher.zjiecode.com/admin/main/message/send) 
 
+[gemini API 密钥申请](https://aistudio.google.com/app/apikey) 
+
 
 钉钉群机器人
 ## 配置文件
@@ -47,22 +49,25 @@
 RepoFileExtensions="js py txt"
 
 # server酱的 PUSH_KEY
-export PUSH_KEY_MY="";
-export PUSH_KEY_SECOND="";
+export PUSH_KEY_MY=
+export PUSH_KEY_SECOND=
 
-## PushMe的push_key
-export PUSH_ME_KEY="";
+## PushMe key
+export PUSH_ME_KEY=
+## 邮箱地址和smtp密钥
+export EMAIL_ADDRESS=
+export EMAIL_PWD=
 
-## qq邮箱地址和smtp密钥
-export EMAIL_ADDRESS="";
-export EMAIL_PWD="";
+## 钉钉机器人key
+export XB_BOT_TOKEN=
+export JOB_BOT_TOKEN=
 
-## gemini key和url
-export API_KEY="";
-export API_URL="";
+## gemini API密钥和API域名
+export API_KEY=
+export API_URL=
 
-## WxPusher
-export WX_PUSH_TOKEN="";
+## WxPusher appToken
+export WX_PUSH_TOKEN=
    ```
 若没有使用load_dotenv()，所有新增PUSH_KEY需要在[sendNotify](sendNotify.py)的push_config中配置key名称后才能生效
 
