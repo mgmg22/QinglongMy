@@ -6,15 +6,13 @@ new Env('线报0818');
 """
 from bs4 import BeautifulSoup
 import requests
-import sendNotify
+from sendNotify import is_product_env, dingding_bot_with_key, send_wx_push
 import sqlite3
 import re
 import asyncio
 from openai_utils import AIHelper
-from md_util import markdown_to_html
-import os
+from md_util import extract_first_title
 from dotenv import load_dotenv
-from wxpush_sendNotify import send_wxpusher_html_message
 
 key_name = "xb"
 xb_list = []
@@ -30,7 +28,6 @@ cursor.execute('''
     ''')
 
 load_dotenv()
-IS_LOCAL_DEV = os.getenv('IS_LOCAL_DEV', 'false').lower()
 
 cxkWhiteList = ["中国银行", "中行", "农业银行", "农行", "交通银行", "交行", "浦发", "邮储", "邮政", "光大", "兴业",
                 "平安", "浙商", "杭州银行", "北京银行", "宁波银行"]
@@ -236,7 +233,6 @@ def notify_markdown():
 
         if is_product_env():
             insert_db(xb_list)
-        # print_db()
         helper = AIHelper()
         prompt = f'''你擅长对内容进行筛选和分析，请逐项分析以下内容的价值，
 符合预期的内容包括：
@@ -272,39 +268,16 @@ def notify_markdown():
         if markdown_text:
             summary = extract_first_title(markdown_text)
             # 发送通知
-            markdown_text += send_wx_push(summary, markdown_text)
-            sendNotify.dingding_bot_with_key(summary, markdown_text, f"{key_name.upper()}_BOT_TOKEN")
+            markdown_text += send_wx_push(summary, markdown_text, 37188)
+            dingding_bot_with_key(summary, markdown_text, f"{key_name.upper()}_BOT_TOKEN")
             if is_product_env():
-                sendNotify.dingding_bot_with_key(summary, markdown_text, "FLN_BOT_TOKEN")
+                dingding_bot_with_key(summary, markdown_text, "FLN_BOT_TOKEN")
             with open(f"log_{key_name}.md", 'w', encoding='utf-8') as f:
                 f.write(markdown_text)
         else:
             print("暂无筛选线报！！")
     else:
         print("暂无线报！！")
-
-
-def send_wx_push(summary: str, markdown_text: str):
-    html_content = markdown_to_html(markdown_text)
-    # print(html_content)
-    uid = [os.getenv('admin_uid')]
-    if is_product_env():
-        uid.append(os.getenv('yun_uid'))
-    else:
-        summary = f'测试消息：{summary}'
-    return send_wxpusher_html_message(summary=summary, content=html_content, topic_id=37188, uids=uid)
-
-
-def extract_first_title(text):
-    match = re.search(r'#####\s*\[\d{1,2}:\d{2}\s*(.*?)\]', text)
-    if match:
-        return match.group(1).strip()
-    else:
-        return ''
-
-
-def is_product_env():
-    return IS_LOCAL_DEV != 'true'
 
 
 def insert_db(list):

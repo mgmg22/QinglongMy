@@ -58,3 +58,11 @@ def markdown_to_html(md_text):
     # 添加一些基础样式
     html = f"<div style='font-family: sans-serif; line-height: 1.6;'>{html}</div>"
     return html
+
+
+def extract_first_title(text):
+    match = re.search(r'#####\s*\[\d{1,2}:\d{2}\s*(.*?)\]', text)
+    if match:
+        return match.group(1).strip()
+    else:
+        return ''
