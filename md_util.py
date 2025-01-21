@@ -18,11 +18,14 @@ def markdown_to_html(md_text):
         url = match.group(3)
         return f'<h5 style="margin-bottom: 5px;"><a href="{url}">{time_text} {link_text}</a></h5>'
 
-    # 处理标题
+    # 处理标题，但排除 #小程序://
     def replace_heading(match):
-        level = len(match.group(1))
-        text = match.group(2)
-        return f'<h{level} style="margin-bottom: 5px;">{text}</h{level}>'
+        if not match.group(2).strip().startswith("小程序://"):
+            level = len(match.group(1))
+            text = match.group(2)
+            return f'<h{level} style="margin-bottom: 5px;">{text}</h{level}>'
+        else:
+            return match.group(0)  # 不替换 #小程序:// 开头的行
 
     # 处理图片
     def replace_image(match):
