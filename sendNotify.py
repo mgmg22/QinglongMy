@@ -170,24 +170,34 @@ def dingding_bot(title: str, content: str) -> None:
         print("钉钉机器人 推送失败！")
 
 
-def dingding_bot_with_token(title: str, content: str, bot_token: str) -> None:
+def dingding_bot_with_key(title: str, content: str, bot_key: str) -> None:
+    """
+    使用 钉钉机器人 推送消息。
+    """
+    if not os.getenv(bot_key):
+        print(f"钉钉机器人{bot_key} 未设置!!\n取消推送")
+        return
+    print(f"钉钉机器人{bot_key} 服务启动")
+    token = os.getenv(bot_key)
     timestamp = str(round(time.time() * 1000))
-    string_to_sign = "{}\n{}".format(timestamp, bot_token)
+    secret_enc = token.encode("utf-8")
+    string_to_sign = "{}\n{}".format(timestamp, bot_key)
     string_to_sign_enc = string_to_sign.encode("utf-8")
     hmac_code = hmac.new(
-        bot_token.encode("utf-8"), string_to_sign_enc, digestmod=hashlib.sha256
+        secret_enc, string_to_sign_enc, digestmod=hashlib.sha256
     ).digest()
     sign = urllib.parse.quote_plus(base64.b64encode(hmac_code))
-    url = f'https://oapi.dingtalk.com/robot/send?access_token={bot_token}&timestamp={timestamp}&sign={sign}'
+    url = f'https://oapi.dingtalk.com/robot/send?access_token={token}&timestamp={timestamp}&sign={sign}'
     headers = {"Content-Type": "application/json;charset=utf-8"}
     data = {"msgtype": "markdown", "markdown": {"title": f"{title}", "text": f"{content}"}}
     response = requests.post(
         url=url, data=json.dumps(data), headers=headers, timeout=15
     ).json()
+
     if not response["errcode"]:
-        print(f"钉钉机器人{bot_token} 推送成功！")
+        print(f"钉钉机器人{bot_key} 推送成功！")
     else:
-        print(f"钉钉机器人{bot_token} 推送失败！")
+        print("钉钉机器人{bot_key} 推送失败！")
 
 
 def feishu_bot(title: str, content: str) -> None:
