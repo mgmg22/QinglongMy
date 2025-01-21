@@ -35,6 +35,8 @@
 
 [PushMe](https://push.i-i.me/) 
 
+[wxpusher](https://wxpusher.zjiecode.com/api/qrcode/QVhvo5InR3Kl1MPqRBE2woggjXCgdwSUFeskT4EJ9ZwEmjhnfse8389dhplE8udH.jpg) 
+
 钉钉群机器人
 ## 配置文件
 
@@ -56,6 +58,9 @@ export EMAIL_PWD="";
 ## gemini key和url
 export API_KEY="";
 export API_URL="";
+
+## WxPusher
+export WX_PUSH_TOKEN="";
    ```
 所有新增PUSH_KEY需要在[sendNotify](sendNotify.py)的push_config中配置key名称后才能生效
 

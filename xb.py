@@ -23,6 +23,7 @@ cursor = conn.cursor()
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS titles (
         id INTEGER PRIMARY KEY,
+        path INTEGER,
         name TEXT UNIQUE NOT NULL,
         href TEXT NOT NULL
     )
@@ -156,6 +157,8 @@ def filter_list(tr):
     if "618.html" in tr['href']:
         return False
     href = 'http://www.0818tuan.com' + tr['href']
+    match = re.search(r'/xbhd/(\d+)\.html', href)
+    path_id = int(match.group(1))
     if has_black_xyk_name(title):
         print("----无该行信用卡，已忽略" + '\t\t' + href)
         return False
@@ -168,7 +171,7 @@ def filter_list(tr):
     if not has_white_word(title) and not has_white_bank_name(title):
         return False
     for row in get_db_data():
-        if title == row[1]:
+        if path_id == row[1]:
             print('重复已忽略')
             return False
     content = get_content(href)
@@ -186,6 +189,7 @@ def filter_list(tr):
     print(title + '\t\t' + href)
     item = {
         'title': title,
+        'path': path_id,
         'href': href,
         'content': content,
         'text': text,
@@ -281,14 +285,12 @@ def notify_markdown():
 
 def send_wx_push(summary: str, markdown_text: str):
     html_content = markdown_to_html(markdown_text)
-    topic_id = None
     if is_product_env():
-        topic_id = os.getenv(f'{key_name}_topic')
-        uid = [os.getenv(f'yun_uid')]
+        uid = [os.getenv(f'test_uid'), os.getenv(f'yun_uid')]
     else:
         uid = [os.getenv(f'test_uid')]
     summary = f'测试消息：{summary}'
-    return send_wxpusher_html_message(summary=summary, content=html_content, topic_id=topic_id, uids=uid)
+    return send_wxpusher_html_message(summary=summary, content=html_content, topic_id=37188, uids=uid)
 
 
 def extract_first_title(text):
@@ -305,9 +307,9 @@ def is_product_env():
 
 def insert_db(list):
     # 使用列表推导式将每个元素转换成元组
-    tuples_list = [(x['title'], x['href']) for x in list]
+    tuples_list = [(x['path'], x['title'], x['href']) for x in list]
     # 使用 executemany 来插入多条记录
-    cursor.executemany('INSERT OR IGNORE INTO titles (name, href) VALUES (?, ?)', tuples_list)
+    cursor.executemany('INSERT OR IGNORE INTO titles (path,name, href) VALUES (?, ?, ?)', tuples_list)
     conn.commit()
 
 
