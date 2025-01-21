@@ -8,6 +8,7 @@ from sendNotify import serverJMy
 import requests
 import pysnowball as ball
 import datetime
+from date_utils import get_today
 import json
 
 stockFilters = [
@@ -111,8 +112,7 @@ def notify_with_markdown():
     if len(notifyData) < 2:
         serverJMy("获取上证数据失败，请检查！！", "")
         return
-    today = get_today()
-    markdown_text = f'''### {today} 行情
+    markdown_text = f'''### {get_today()} 行情
 | 名称 | 现价 | 涨幅 | 均价 |
 |--------|--------|--------|--------|
 '''
@@ -121,14 +121,6 @@ def notify_with_markdown():
     serverJMy(generate_title(), markdown_text)
     with open("log_stock.md", 'w', encoding='utf-8') as f:
         f.write(markdown_text)
-
-
-def get_today() -> str:
-    today = datetime.date.today()
-    weekday = today.weekday()
-    days = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
-    day_name = days[weekday]
-    return str(today) + " " + day_name
 
 
 def generate_title() -> str:

@@ -32,6 +32,6 @@ def send_wxpusher_html_message(summary: str, content: str, topic_id: int, uids: 
         response.raise_for_status()
         json_response = response.json()
         # print(json_response)
-        return f"\n微信推送{json_response.get('msg')}"
+        return f"\n✨微信推送{json_response.get('msg')}"
     except requests.exceptions.RequestException as e:
-        return f"\n微信推送请求错误: {e}"
+        return f"\n✨微信推送请求错误: {e}"
