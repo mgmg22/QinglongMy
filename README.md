@@ -66,8 +66,9 @@ export JOB_BOT_TOKEN=
 export API_KEY=
 export API_URL=
 
-## WxPusher appToken
+## WxPusher appToken及uid
 export WX_PUSH_TOKEN=
+export admin_uid=
    ```
 若没有使用load_dotenv()，所有新增PUSH_KEY需要在[sendNotify](sendNotify.py)的push_config中配置key名称后才能生效
 
