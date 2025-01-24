@@ -37,13 +37,12 @@ def markdown_to_html(md_text):
         score = match.group(1)
         return f'<p style="margin-top: 5px; color: gray;">「评分{score}分」{match.group(2)}</p>'
 
-    # 处理小程序链接
+    # 保护小程序链接 (先处理小程序链接，防止被标题匹配)
     def replace_miniprogram(match):
-        return match.group(0)  # 保持原样返回
+        return f'<span class="miniprogram-link">{match.group(0)}</span>'
 
-    # 保护小程序链接
+    # 替换小程序链接（先处理小程序链接）
     md_text = re.sub(r'#小程序://[^\s]+', replace_miniprogram, md_text)
-
     # 替换带链接的标题
     md_text = re.sub(r'#####\s*\[([^\]]+)\s*([^\]]+)\]\(([^)]+)\)', replace_title_with_link, md_text)
     # 替换标题
