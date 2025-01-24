@@ -93,7 +93,7 @@ class AIHelper:
                 results.append(cleaned_response)
             except json.JSONDecodeError as e:
                 print(f"Invalid JSON after cleaning: {e}")
-                return json.dumps([])  # 返回空数组作为后备方案
+                return json.dumps(content)
 
         except Exception as e:
             print(f"调用API时出错: {str(e)}")
@@ -105,7 +105,7 @@ class AIHelper:
                 results.append(cleaned_response)
             except Exception as e:
                 print(f"重试时出错: {str(e)}")
-                return json.dumps([])  # 返回空数组作为后备方案
+                return json.dumps(content)
 
         # 返回结果字符串
         return results[0]
