@@ -12,8 +12,8 @@ import sqlite3
 import re
 import asyncio
 from openai_utils import AIHelper
-from md_util import extract_first_title
 from dotenv import load_dotenv
+import json
 
 key_name = "xb"
 xb_list = []
@@ -179,7 +179,7 @@ def filter_list(tr):
         if content and checkItem in content.get_text():
             print(f"{checkItem}\t\t----关键字不合法，已忽略\t\t{href}")
             return False
-    text = get_complete_content(content)
+    text = get_complete_content(content).strip()
     img_tags = content.find_all('img')
     src_list = []
     for img in img_tags:
@@ -190,9 +190,9 @@ def filter_list(tr):
         'title': title,
         'path': path_id,
         'href': href,
-        'content': content,
         'text': text,
         'src_list': src_list,
+        'score': '',
     }
     xb_list.append(item)
 
@@ -224,21 +224,29 @@ def get_top_summary():
 
 def notify_markdown():
     if xb_list:
-        markdown_text = ''
-        for item in xb_list:
-            markdown_text += f'''
-##### [{item['title']}]({item['href']})
-{item['text']}
-'''
-            for img in item['src_list']:
-                markdown_text += f'![]({img})'
-
         if is_product_env():
             insert_db(xb_list)
-        with open(md_name, 'a', encoding='utf-8') as f:
-            f.write(markdown_text)
         helper = AIHelper()
-        prompt = f'''你擅长对内容进行筛选和分析，请逐项分析以下内容的价值，
+        prompt = f'''请分析以下内容的价值，并返回符合预期的内容。
+
+输出要求：
+1. 必须返回标准的 JSON 数组
+2. 不要返回任何其他内容（如 ```json 标记）
+3. 每个对象必须包含以下字段：title, href, src_list, text, score
+4. score 字段格式为：「评分1-5分」一句话简要总结的理由
+
+示例输出格式：
+[
+    {{
+        "title": "示例标题",
+        "href": "示例链接",
+        "src_list": ["图片链接1", "图片链接2"],
+        "text": "示例文本内容",
+        "score": "「4分」优惠力度大，活动简单"
+    }}
+]
+
+筛选规则：
 符合预期的内容包括：
 1. 羊毛活动
 2. 优惠活动
@@ -251,6 +259,7 @@ def notify_markdown():
 借记卡和信用卡[工商银行 工行 工银 e生活 建设银行 建融 招商银行 掌上生活 中信])
 8. 带有二维码的图片
 9. 浙江地区的活动
+
 不符合预期的内容包括：
 1. 闲聊,水贴
 2. 吐槽
@@ -258,29 +267,37 @@ def notify_markdown():
 4. 女装商品
 5. 限定这些地区的活动（上海、深圳、北京、天津、重庆）注意"上海交通卡"是全国通用的活动
 6. 提问或求助帖(买什么 买那个)
-7. 部分银行信用卡活动["中国银行","农业银行","交通银行","浦发", "邮储", "邮政", "光大", "兴业","平安", "浙商", "杭州银行", "北京银行", "宁波银行"]
+7. 部分银行信用卡活动["中国银行","农业银行","交通银行","浦发", "邮储", "邮政", "光大", "兴业","平安", "浙商","杭州银行","北京银行","宁波银行"]
 8. 这些银行的数字人民币活动("农业银行","交通银行","浦发","邮储","邮政","光大","兴业","平安","浙商","杭州银行","北京银行", "宁波银行" 工商银行 招商银行 中信)
-如果不符合预期请忽略该项，不要返回该项结果，
-符合预期则在保持数据格式不变的前提下，在每一项结尾添加一行数据格式为：
-「评分1-5分」一句话简要总结的理由
-返回前检查：
-1. 保持markdown数据格式不要返回其他无关内容
-2. 不要返回不符合预期的内容
-3. 自动纠正原始数据中的错别字或字母缩写更方便阅读(zfb vx v.x dy等)
-{markdown_text}'''
-        markdown_text = asyncio.run(helper.analyze_content(markdown_text, prompt))
-        if markdown_text:
-            summary = extract_first_title(markdown_text)
-            # 发送通知
-            markdown_text += send_wx_push(summary, markdown_text, 37188)
-            dingding_bot_with_key(summary, markdown_text, f"{key_name.upper()}_BOT_TOKEN")
-            if is_product_env():
-                dingding_bot_with_key(summary, markdown_text, "FLN_BOT_TOKEN")
-            with open(md_name, 'a', encoding='utf-8') as f:
-                f.write("\n============================处理后数据===========================================\n")
-                f.write(markdown_text)
-        else:
-            print("暂无筛选线报！！")
+
+处理要求：
+1. 不符合预期的内容不要返回
+2. 自动纠正title中的错别字或字母缩写（如 zfb->支付宝, vx->微信, dy->抖音）
+3. 保持原有数据结构，仅在 score 字段中添加评分和理由
+
+待分析内容：
+{xb_list}'''
+
+        json_response = asyncio.run(helper.analyze_content(xb_list, prompt))
+        json_data = json.loads(json_response)
+
+        markdown_text = ''
+        for item in json_data:
+            markdown_text += f'''
+##### [{item['title']}{item['score']}]({item['href']})
+{item['text']}
+'''
+            for img in item['src_list']:
+                markdown_text += f'![]({img})'
+        summary = json_data[0]['title']
+        # 发送通知
+        markdown_text += send_wx_push(summary, markdown_text, 37188)
+        dingding_bot_with_key(summary, markdown_text, f"{key_name.upper()}_BOT_TOKEN")
+        if is_product_env():
+            dingding_bot_with_key(summary, markdown_text, "FLN_BOT_TOKEN")
+        with open(md_name, 'a', encoding='utf-8') as f:
+            f.write("\n============================处理后数据===========================================\n")
+            f.write(markdown_text)
     else:
         print("暂无线报！！")
 

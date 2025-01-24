@@ -54,21 +54,58 @@ class AIHelper:
             print(f"调用API时出错: {str(e)}")
             raise
 
-    async def analyze_content(self, content: str, prompt: str) -> str:
+    def clean_response(self, response: str) -> str:
+        """去除响应中的 ```json 和 ``` 标记，并确保返回有效的 JSON 字符串"""
+        # print("Original response:", response)  # 打印原始响应
+
+        # 尝试找到 JSON 内容的开始和结束
+        try:
+            # 查找 JSON 数组的开始和结束
+            start_idx = response.find('[')
+            end_idx = response.rfind(']') + 1
+
+            if start_idx != -1 and end_idx > start_idx:
+                json_str = response[start_idx:end_idx]
+                # 验证是否为有效的 JSON
+                try:
+                    json.loads(json_str)
+                    return json_str
+                except json.JSONDecodeError as e:
+                    print(f"JSON validation failed: {e}")
+
+            print("Failed to find valid JSON content")
+            return response  # 如果无法找到有效的 JSON，返回原始响应
+
+        except Exception as e:
+            print(f"Error in clean_response: {e}")
+            return response
+
+    async def analyze_content(self, content: dict, prompt: str) -> str:
         results = []
         try:
             score_response = await self.chat_completion(prompt)
-            results.append(score_response)
+            # print("API Response:", score_response)  # 打印 API 响应
+            cleaned_response = self.clean_response(score_response)
+
+            # 验证清理后的响应是否为有效的 JSON
+            try:
+                json.loads(cleaned_response)
+                results.append(cleaned_response)
+            except json.JSONDecodeError as e:
+                print(f"Invalid JSON after cleaning: {e}")
+                return json.dumps([])  # 返回空数组作为后备方案
+
         except Exception as e:
             print(f"调用API时出错: {str(e)}")
             print("等待 1 分钟后重试...")
             await asyncio.sleep(60)  # 等待 1 分钟重试
             try:
                 score_response = await self.chat_completion(prompt)
-                results.append(score_response)
+                cleaned_response = self.clean_response(score_response)
+                results.append(cleaned_response)
             except Exception as e:
                 print(f"重试时出错: {str(e)}")
-                return content  # 直接返回原始内容
+                return json.dumps([])  # 返回空数组作为后备方案
 
         # 返回结果字符串
         return results[0]
