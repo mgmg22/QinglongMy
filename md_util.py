@@ -46,7 +46,7 @@ def markdown_to_html(md_text):
     # 替换带链接的标题
     md_text = re.sub(r'#####\s*\[([^\]]+)\s*([^\]]+)\]\(([^)]+)\)', replace_title_with_link, md_text)
     # 替换标题
-    md_text = re.sub(r'(#+)\s*(.+)', replace_heading, md_text)
+    # md_text = re.sub(r'(#+)\s*(.+)', replace_heading, md_text)
     # 替换图片
     md_text = re.sub(r'!\[\]\(([^)]+)\)', replace_image, md_text)
     # 替换评分
