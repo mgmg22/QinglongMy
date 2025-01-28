@@ -8,7 +8,7 @@ from sendNotify import serverJMy
 import requests
 import pysnowball as ball
 import datetime
-from date_utils import get_today
+from date_utils import get_today, is_today
 import json
 
 stockFilters = [
@@ -44,17 +44,19 @@ def add_xq_increase(symbol):
     try:
         quote = ball.quote_detail(symbol)['data']['quote']
         # print(quote)
-        price = format(quote['current'], '.2f')
-        code = quote['code']
-        notifyData.append({
-            'id': code,
-            'name': quote['name'],
-            'increase': str(quote['percent']),
-            'current': price,
-            'avg_price': format(quote['avg_price'], '.2f'),
-            'href': get_wx_href(code, quote['exchange']),
-        })
-        print(f"{code}\t{quote['name']}\t{price}")
+        timestamp = quote['time'] / 1000  # 将毫秒转换为秒
+        if is_today(timestamp):
+            price = format(quote['current'], '.2f')
+            code = quote['code']
+            notifyData.append({
+                'id': code,
+                'name': quote['name'],
+                'increase': str(quote['percent']),
+                'current': price,
+                'avg_price': format(quote['avg_price'], '.2f'),
+                'href': get_wx_href(code, quote['exchange']),
+            })
+            print(f"{code}\t{quote['name']}\t{price}")
     except Exception as e:
         # 打印异常信息
         print(f"add_xq_increase An error occurred: {e}")
@@ -88,15 +90,6 @@ def add_sw_increase():
         now = float(data['l8'])
         increase = str(round(((now - last_day) / last_day) * 100, 2))
         current = str(now)
-    except requests.exceptions.RequestException as e:
-        print(e)
-    except json.JSONDecodeError as e:
-        print("JSON解析错误:", e)
-    except IndexError as e:
-        print("索引错误:", e)
-    except Exception as e:
-        print("发生错误:", e)
-    finally:
         notifyData.append({
             'id': '801150',
             'name': "医药生物",
@@ -106,10 +99,20 @@ def add_sw_increase():
             'href': wx_url + 'plate/200/detail?plateId=01801150',
         })
         print(f"801150\t医药生物\t{increase}")
+    except requests.exceptions.RequestException as e:
+        print(e)
+    except json.JSONDecodeError as e:
+        print("JSON解析错误:", e)
+    except IndexError as e:
+        print("索引错误:", e)
+    except Exception as e:
+        print("发生错误:", e)
+
 
 
 def notify_with_markdown():
     if len(notifyData) < 2:
+        print("没有数据！")
         serverJMy("获取上证数据失败，请检查！！", "")
         return
     markdown_text = f'''### {get_today()} 行情
@@ -131,7 +134,6 @@ if __name__ == '__main__':
     # https://github.com/uname-yang/pysnowball/issues/1
     r = requests.get("https://xueqiu.com/hq", headers={"user-agent": "Mozilla"})
     t = r.cookies["xq_a_token"]
-    # print(t)
     ball.set_token(f'xq_a_token={t}')
     add_xq_increase('SH000001')
     add_xq_increase('SZ399808')

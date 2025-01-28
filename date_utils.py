@@ -1,4 +1,7 @@
 import datetime
+from datetime import date
+
+today = date.today()
 
 
 def get_day_string(date=None):
@@ -18,8 +21,12 @@ def get_day_string(date=None):
 
 
 def get_today() -> str:
-    today = datetime.date.today()
     weekday = today.weekday()
     days = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
     day_name = days[weekday]
     return str(today) + " " + day_name
+
+
+# 判断报价日期是否是今天
+def is_today(timestamp):
+    return today == datetime.datetime.fromtimestamp(timestamp).date()
