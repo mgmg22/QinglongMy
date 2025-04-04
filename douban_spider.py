@@ -130,59 +130,6 @@ user_black_list = [
 processed_links = set()
 
 
-def format_output(text, time, user, href):
-    """
-    格式化输出一行数据
-    @param text: 标题文本
-    @param time: 时间
-    @param user: 用户名
-    @param href: 链接
-    @return: 格式化后的字符串
-    """
-
-    # 计算字符串显示宽度的函数
-    def get_string_width(s):
-        width = 0
-        for c in s:
-            width += 2 if ord(c) > 127 else 1
-        return width
-
-    # 确保文本显示宽度为指定值的函数
-    def pad_text_to_width(text, target_width):
-        current_width = get_string_width(text)
-        if current_width > target_width:
-            # 如果文本过长，直接截断
-            result = ""
-            width = 0
-            for c in text:
-                char_width = 2 if ord(c) > 127 else 1
-                if width + char_width > target_width:
-                    break
-                result += c
-                width += char_width
-            return result
-        else:
-            # 补充空格到目标宽度
-            return text + " " * (target_width - current_width)
-
-    # 固定各个部分的宽度
-    title_target_width = 90
-    user_width = 15
-    link_width = 85  # 固定链接显示宽度
-
-    # 处理标题，确保显示宽度严格等于90
-    truncated_text = pad_text_to_width(text, title_target_width)
-
-    # 处理用户名
-    truncated_user = (user[:14] + ".").ljust(user_width) if len(user) > 14 else user.ljust(user_width)
-
-    # 处理链接
-    truncated_href = href[:link_width] if len(href) > link_width else href.ljust(link_width)
-
-    # 组合输出行
-    return f"{truncated_text}{time} {truncated_user}{truncated_href}"
-
-
 def filter_content(item: dict) -> bool:
     """
     过滤内容
@@ -243,27 +190,15 @@ def filter_content(item: dict) -> bool:
         if keyword in item['title']:
             # print(f"过滤：标题包含关键词 '{keyword}' - {href}")
             return False
-
     return True
 
 
 def print_discussions(discussions: list):
     """打印讨论列表"""
-    # 如果是第一条数据，先打印表头
-    if len(summary_list) == 0:
-        print("\n" + "=" * 160)
-        print(format_output("标题", "时间", "用户", "链接"))
-        print("-" * 160)
 
     for item in discussions:
         if filter_content(item):
-            output_line = format_output(
-                item['title'],
-                item['time'],
-                item['author'],
-                item['link']
-            )
-            print(output_line)
+            print(item['title'] + '\t\t' + item['time'] + '\t\t' + item['author'] + '\t\t' + item['link'])
             processed_links.add(item['link'])
             summary_list.append(item)
 
