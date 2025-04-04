@@ -100,6 +100,7 @@ metroStations = [
 # new Env('豆瓣租房');
 # """
 from douban_scraper import DoubanScraper
+import time
 
 summary_list = []
 

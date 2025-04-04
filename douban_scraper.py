@@ -20,11 +20,9 @@ class DoubanScraper:
             browser_page = context.new_page()
             url = f'https://www.douban.com/group/{group_id}/discussion?start={page * 25}'
 
-            # 修改加载策略
-            browser_page.set_default_timeout(30000)  # 保持30秒超时
+            # 设置超时和请求头
+            browser_page.set_default_timeout(30000)
             browser_page.set_default_navigation_timeout(30000)
-
-            # 设置请求头
             browser_page.set_extra_http_headers({
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                 'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
@@ -32,36 +30,13 @@ class DoubanScraper:
                 'Cache-Control': 'max-age=0',
             })
 
-            # 修改加载策略，不等待网络空闲
+            # 加载页面
             response = browser_page.goto(url, wait_until='domcontentloaded')
-
-            if response is None:
-                print("页面响应为空")
+            if not response or response.status != 200:
                 return []
 
-            try:
-                content = browser_page.content()
-
-            except Exception as e:
-                print(f"获取页面内容失败: {e}")
-
-            if response.status != 200:
-                print(f"页面加载失败: status={response.status}")
-                print(f"响应URL: {response.url}")
-                try:
-                    print(f"页面文本: {content[:500]}...")  # 只打印前500个字符
-                except:
-                    pass
-                return []
-
-            # 先等待页面基本元素加载
-            try:
-                browser_page.wait_for_selector('body', timeout=5000)
-            except Exception as e:
-                print(f"等待body元素失败: {e}")
-                return []
-
-            # 处理可能的验证
+            # 等待页面加载并处理验证
+            browser_page.wait_for_selector('body', timeout=5000)
             self._handle_verification(browser_page)
 
             # 尝试不同的选择器
@@ -102,19 +77,14 @@ class DoubanScraper:
                             """)
 
                         if discussions and len(discussions) > 0:
-                            context.close()
                             return discussions
-                except Exception as e:
-                    # print(f"选择器 {selector} 失败: {str(e)}")
+                except:
                     continue
 
-            print("所有选择器都失败了")
             return []
 
         except Exception as e:
             print(f"爬取失败: {str(e)}")
-            import traceback
-            print(f"详细错误信息: {traceback.format_exc()}")
             return []
         finally:
             try:
@@ -125,22 +95,13 @@ class DoubanScraper:
     def _handle_verification(self, page) -> None:
         """处理反爬虫验证"""
         try:
-            # 检查是否存在验证按钮
             if page.query_selector('#sub'):
-                print("发现验证按钮，等待处理...")
-                # 等待按钮可点击
                 page.wait_for_selector('#sub', state='visible', timeout=10000)
-                # 点击验证按钮
                 page.click('#sub')
-                # 等待页面加载完成
                 page.wait_for_load_state('networkidle')
-                print("验证处理完成")
-
-                # 额外等待一下，确保页面完全加载
                 time.sleep(2)
-
-        except Exception as e:
-            print(f"处理验证失败: {str(e)}")
+        except:
+            pass
 
     def close(self):
         """关闭浏览器"""
@@ -151,11 +112,8 @@ class DoubanScraper:
 if __name__ == '__main__':
     scraper = DoubanScraper()
     try:
-        # 爬取上海租房小组第一页数据
         results = scraper.get_group_discussions('shanghaizufang')
-        # 保存结果
         with open('discussions.json', 'w', encoding='utf-8') as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
-        print(f"成功爬取 {len(results)} 条数据")
     finally:
         scraper.close()
