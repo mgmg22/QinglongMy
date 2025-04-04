@@ -33,10 +33,19 @@ class DoubanScraper:
             # 加载页面
             response = browser_page.goto(url, wait_until='domcontentloaded')
             if not response or response.status != 200:
+                print(f"页面响应异常: status={response.status if response else 'None'}")
+                print(f"响应头: {response.headers if response else 'None'}")
                 return []
 
             # 等待页面加载并处理验证
-            browser_page.wait_for_selector('body', timeout=5000)
+            try:
+                browser_page.wait_for_selector('body', timeout=5000)
+            except Exception as e:
+                print(f"等待body元素超时: {e}")
+                print("当前页面内容:")
+                print(browser_page.content())
+                return []
+
             self._handle_verification(browser_page)
 
             # 尝试不同的选择器
