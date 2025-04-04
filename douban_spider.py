@@ -128,6 +128,7 @@ user_black_list = [
     "欣欣",
 ]
 
+processed_links = set()
 
 def filter_tr(tr):
     # print("-----")
@@ -136,12 +137,17 @@ def filter_tr(tr):
         return False
     if "置顶" in str(title):
         return False
+    href = title[0].find('a')['href']
+    
+    # 检查链接是否已经处理过
+    if href in processed_links:
+        return False
+    
     user = tr.select('td:nth-child(2)')[0].find('a').get_text()
     if user in user_black_list:
         # print(f"过滤：用户 {user} 在黑名单中")
         return False
     text = title[0].find('a')['title'].strip()
-    href = title[0].find('a')['href']
 
     # 排除项
     blackList = [
@@ -196,26 +202,44 @@ def filter_tr(tr):
         'href': href,
         'time': time,
     }
+    processed_links.add(href)
     summary_list.append(item)
 
 
-def get_top_summary(start):
-    # url = 'https://www.douban.com/group/wujiaochang/discussion?start='+ str(start)
-    # url = 'https://www.douban.com/group/383972/discussion?start='+ str(start)
+def get_top_summary(start, max_items=20, max_pages=5):
+    """
+    获取租房信息摘要
+    @param start: 起始位置
+    @param max_items: 最大获取条目数
+    @param max_pages: 最大页数限制，防止无限递归
+    """
+    if len(summary_list) >= max_items or start >= max_pages * 25:
+        return
+        
     url = 'https://www.douban.com/group/shanghaizufang/discussion?start=' + str(start)
     headers = {
         'accept': "*/*",
         'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     }
-    data = requests.get(url, headers=headers)
-    data.encoding = 'utf-8'
-    soup = BeautifulSoup(data.text, 'html.parser')
-    tr_elements = soup.select('#content > div > div.article > div:nth-child(2) > table> tr')
-    for tr in tr_elements:
-        filter_tr(tr)
-    if len(summary_list) <= 20:
-        print("-----")
-        get_top_summary(start + 25)
+    
+    try:
+        data = requests.get(url, headers=headers, timeout=10)
+        data.encoding = 'utf-8'
+        soup = BeautifulSoup(data.text, 'html.parser')
+        tr_elements = soup.select('#content > div > div.article > div:nth-child(2) > table> tr')
+        
+        for tr in tr_elements:
+            if len(summary_list) >= max_items:
+                return
+            filter_tr(tr)
+            
+        print(f"-----第{start//25 + 1}页处理完成，当前收集{len(summary_list)}条数据-----")
+        
+        if len(summary_list) < max_items:
+            get_top_summary(start + 25, max_items, max_pages)
+            
+    except Exception as e:
+        print(f"获取数据出错: {str(e)}")
 
 
 if __name__ == '__main__':
