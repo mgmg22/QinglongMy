@@ -99,9 +99,7 @@ metroStations = [
 # cron: 5 9 * * * weibo_summary.py
 # new Env('豆瓣租房');
 # """
-from bs4 import BeautifulSoup
-import requests
-import sendNotify
+from douban_scraper import DoubanScraper
 
 summary_list = []
 
@@ -130,26 +128,78 @@ user_black_list = [
 
 processed_links = set()
 
-def filter_tr(tr):
-    # print("-----")
-    title = tr.select('td.title')
-    if not title:
-        return False
-    if "置顶" in str(title):
-        return False
-    href = title[0].find('a')['href']
-    
-    # 检查链接是否已经处理过
-    if href in processed_links:
-        return False
-    
-    user = tr.select('td:nth-child(2)')[0].find('a').get_text()
-    if user in user_black_list:
-        # print(f"过滤：用户 {user} 在黑名单中")
-        return False
-    text = title[0].find('a')['title'].strip()
 
-    # 排除项
+def format_output(text, time, user, href):
+    """
+    格式化输出一行数据
+    @param text: 标题文本
+    @param time: 时间
+    @param user: 用户名
+    @param href: 链接
+    @return: 格式化后的字符串
+    """
+
+    # 计算字符串显示宽度的函数
+    def get_string_width(s):
+        width = 0
+        for c in s:
+            width += 2 if ord(c) > 127 else 1
+        return width
+
+    # 确保文本显示宽度为指定值的函数
+    def pad_text_to_width(text, target_width):
+        current_width = get_string_width(text)
+        if current_width > target_width:
+            # 如果文本过长，直接截断
+            result = ""
+            width = 0
+            for c in text:
+                char_width = 2 if ord(c) > 127 else 1
+                if width + char_width > target_width:
+                    break
+                result += c
+                width += char_width
+            return result
+        else:
+            # 补充空格到目标宽度
+            return text + " " * (target_width - current_width)
+
+    # 固定各个部分的宽度
+    title_target_width = 90
+    user_width = 15
+    link_width = 85  # 固定链接显示宽度
+
+    # 处理标题，确保显示宽度严格等于90
+    truncated_text = pad_text_to_width(text, title_target_width)
+
+    # 处理用户名
+    truncated_user = (user[:14] + ".").ljust(user_width) if len(user) > 14 else user.ljust(user_width)
+
+    # 处理链接
+    truncated_href = href[:link_width] if len(href) > link_width else href.ljust(link_width)
+
+    # 组合输出行
+    return f"{truncated_text}{time} {truncated_user}{truncated_href}"
+
+
+def filter_content(item: dict) -> bool:
+    """
+    过滤内容
+
+    Args:
+        item: 帖子信息字典
+    Returns:
+        bool: True 表示通过过滤，False 表示被过滤掉
+    """
+    # 检查链接是否已经处理过
+    if item['link'] in processed_links:
+        return False
+
+    # 检查用户是否在黑名单中
+    if item['author'] in user_black_list:
+        return False
+
+    # 排除项关键词检查
     blackList = [
         "女生", "房源", "公积金", "居住证", "钥匙", "别墅",
         "求租", "预算", "有没有",
@@ -176,7 +226,7 @@ def filter_tr(tr):
         "11号线", "花桥", "迪士尼",
         "金运路", "巨峰路",
         "14号线", "封浜", "曹路", "真光路",
-        "15号线", "曙建路", "永德路",
+        "15号线", "曙建路", "永德路", "上海西站",
         "16号线", "龙阳路", "浦东机场", "顾唐路",
         "17号线", "诸光路", "东方绿舟",
         "18号线", "航头", "滴水湖", "御桥",
@@ -189,59 +239,71 @@ def filter_tr(tr):
     ]
 
     for keyword in blackList:
-        if keyword in text:
+        if keyword in item['title']:
             # print(f"过滤：标题包含关键词 '{keyword}' - {href}")
             return False
 
-    time = tr.select('td.time')[0].text
-
-    print(text + '\t\t' + time + '\t\t' + user + '\t\t' + href)
-    item = {
-        'user': user,
-        'title': text,
-        'href': href,
-        'time': time,
-    }
-    processed_links.add(href)
-    summary_list.append(item)
+    return True
 
 
-def get_top_summary(start, max_items=20, max_pages=5):
+def print_discussions(discussions: list):
+    """打印讨论列表"""
+    # 如果是第一条数据，先打印表头
+    if len(summary_list) == 0:
+        print("\n" + "=" * 160)
+        print(format_output("标题", "时间", "用户", "链接"))
+        print("-" * 160)
+
+    for item in discussions:
+        if filter_content(item):
+            output_line = format_output(
+                item['title'],
+                item['time'],
+                item['author'],
+                item['link']
+            )
+            print(output_line)
+            processed_links.add(item['link'])
+            summary_list.append(item)
+
+
+def get_top_summary(start: int = 0, max_items: int = 20, max_pages: int = 5):
     """
     获取租房信息摘要
-    @param start: 起始位置
-    @param max_items: 最大获取条目数
-    @param max_pages: 最大页数限制，防止无限递归
+
+    Args:
+        start: 起始位置
+        max_items: 最大获取条目数
+        max_pages: 最大页数限制
     """
-    if len(summary_list) >= max_items or start >= max_pages * 25:
-        return
-        
-    url = 'https://www.douban.com/group/shanghaizufang/discussion?start=' + str(start)
-    headers = {
-        'accept': "*/*",
-        'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-    }
-    
+    scraper = DoubanScraper()
     try:
-        data = requests.get(url, headers=headers, timeout=10)
-        data.encoding = 'utf-8'
-        soup = BeautifulSoup(data.text, 'html.parser')
-        tr_elements = soup.select('#content > div > div.article > div:nth-child(2) > table> tr')
-        
-        for tr in tr_elements:
-            if len(summary_list) >= max_items:
-                return
-            filter_tr(tr)
-            
-        print(f"-----第{start//25 + 1}页处理完成，当前收集{len(summary_list)}条数据-----")
-        
-        if len(summary_list) < max_items:
-            get_top_summary(start + 25, max_items, max_pages)
-            
+        current_page = start
+        while len(summary_list) < max_items and current_page < max_pages * 25:
+            page_num = current_page // 25
+
+            # 获取当前页数据
+            discussions = scraper.get_group_discussions('shanghaizufang', page_num)
+
+            if not discussions:
+                print("未获取到数据，可能是页面结构变化或反爬限制")
+                break
+
+            print_discussions(discussions)
+            # 更新页码
+            current_page += 25
+            # 添加延时，避免请求过快
+            time.sleep(2)
+
     except Exception as e:
-        print(f"获取数据出错: {str(e)}")
+        print(f"获取数据失败: {str(e)}")
+        import traceback
+        print(f"详细错误信息: {traceback.format_exc()}")
+    finally:
+        scraper.close()
 
 
 if __name__ == '__main__':
-    get_top_summary(0)
-    # notify_markdown()
+    processed_links = set()
+    summary_list = []
+    get_top_summary()
