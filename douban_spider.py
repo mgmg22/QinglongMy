@@ -29,6 +29,8 @@ user_black_list = [
     "欣欣", "Sandra", "明明就", "荒野蛮神",
     "筑堰公寓zzlp", "一吃就胖小湛蓝", "月亮是我踹弯的",
     "上海链家小孙", "豆友UF1HJgKfBU", "野的像风", "不将就i",
+    "我恨我痴心", "豆友1dyNCH3jx0",
+    "北有孤酒", "不羁",
 ]
 
 processed_links = set()
@@ -55,12 +57,10 @@ def filter_content(item: dict) -> bool:
     blackList = [
         "女生", "房源", "公积金", "居住证", "钥匙", "别墅",
         "求租", "预算", "有没有",
-        "青浦",
-        "嘉定",
-        "虹桥商务区",
+        "青浦", "嘉定", "虹桥商务区",
         "浦东",
         # "静安",
-        "普陀",
+        "普陀", "松江",
         "奉贤", "海湾",
     ]
     for keyword in blackList:
@@ -213,19 +213,16 @@ def get_top_summary(start: int = 0, max_items: int = 20, max_pages: int = 5):
         current_page = start
         while len(summary_list) < max_items and current_page < max_pages * 25:
             page_num = current_page // 25
-
             # 获取当前页数据
             discussions = scraper.get_group_discussions('shanghaizufang', page_num)
-
             if not discussions:
                 print("未获取到数据，可能是页面结构变化或反爬限制")
                 break
-
             print_discussions(discussions)
             # 更新页码
             current_page += 25
             # 添加延时，避免请求过快
-            time.sleep(6)
+            time.sleep(5)
 
     except Exception as e:
         print(f"获取数据失败: {str(e)}")

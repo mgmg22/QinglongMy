@@ -54,7 +54,6 @@ class DoubanScraper:
                 'table.olt tr',  # 旧版布局
                 '#content table tr'  # 备用选择器
             ]
-
             for selector in selectors:
                 try:
                     if browser_page.wait_for_selector(selector, timeout=5000):
@@ -64,7 +63,7 @@ class DoubanScraper:
                                 () => {
                                     const items = document.querySelectorAll('.article .topic-item');
                                     return Array.from(items).map(item => ({
-                                        title: item.querySelector('.title a')?.textContent?.trim(),
+                                        title: item.querySelector('.title a')?.textContent?.trim().replace(/\s/g, ''),
                                         link: item.querySelector('.title a')?.href,
                                         author: item.querySelector('.user-info a')?.textContent?.trim(),
                                         time: item.querySelector('.time')?.textContent?.trim()
