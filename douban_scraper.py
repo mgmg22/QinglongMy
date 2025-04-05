@@ -76,7 +76,7 @@ class DoubanScraper:
                                 () => {
                                     const rows = document.querySelectorAll('table.olt tr');
                                     return Array.from(rows).slice(1).map(row => ({
-                                        title: row.querySelector('td.title a')?.textContent?.trim(),
+                                        title: row.querySelector('td.title a')?.textContent?.trim().replace(/\s/g, ''),
                                         link: row.querySelector('td.title a')?.href,
                                         author: row.querySelector('td:nth-child(2) a')?.textContent?.trim(),
                                         time: row.querySelector('td:nth-child(4)')?.textContent?.trim()
