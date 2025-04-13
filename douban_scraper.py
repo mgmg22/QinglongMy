@@ -39,7 +39,7 @@ class DoubanScraper:
 
             # 等待页面加载并处理验证
             try:
-                browser_page.wait_for_selector('body', timeout=5000)
+                browser_page.wait_for_selector('body', timeout=11000)
             except Exception as e:
                 print(f"等待body元素超时: {e}")
                 print("当前页面内容:")
@@ -56,18 +56,21 @@ class DoubanScraper:
             ]
             for selector in selectors:
                 try:
-                    if browser_page.wait_for_selector(selector, timeout=5000):
+                    if browser_page.wait_for_selector(selector, timeout=11000):
                         if 'topic-item' in selector:
                             # 新版布局
                             discussions = browser_page.evaluate("""
                                 () => {
                                     const items = document.querySelectorAll('.article .topic-item');
-                                    return Array.from(items).map(item => ({
-                                        title: item.querySelector('.title a')?.textContent?.trim().replace(/\s/g, ''),
-                                        link: item.querySelector('.title a')?.href,
-                                        author: item.querySelector('.user-info a')?.textContent?.trim(),
-                                        time: item.querySelector('.time')?.textContent?.trim()
-                                    }));
+                                    return Array.from(items).map(item => {
+                                        const titleLink = item.querySelector('.title a');
+                                        return {
+                                            title: (titleLink?.getAttribute('title') || titleLink?.textContent)?.trim().replace(/\s/g, ''),
+                                            link: titleLink?.href,
+                                            author: item.querySelector('.user-info a')?.textContent?.trim(),
+                                            time: item.querySelector('.time')?.textContent?.trim()
+                                        };
+                                    });
                                 }
                             """)
                         else:
@@ -75,12 +78,15 @@ class DoubanScraper:
                             discussions = browser_page.evaluate("""
                                 () => {
                                     const rows = document.querySelectorAll('table.olt tr');
-                                    return Array.from(rows).slice(1).map(row => ({
-                                        title: row.querySelector('td.title a')?.textContent?.trim().replace(/\s/g, ''),
-                                        link: row.querySelector('td.title a')?.href,
-                                        author: row.querySelector('td:nth-child(2) a')?.textContent?.trim(),
-                                        time: row.querySelector('td:nth-child(4)')?.textContent?.trim()
-                                    }));
+                                    return Array.from(rows).slice(1).map(row => {
+                                        const titleLink = row.querySelector('td.title a');
+                                        return {
+                                            title: (titleLink?.getAttribute('title') || titleLink?.textContent)?.trim().replace(/\s/g, ''),
+                                            link: titleLink?.href,
+                                            author: row.querySelector('td:nth-child(2) a')?.textContent?.trim(),
+                                            time: row.querySelector('td:nth-child(4)')?.textContent?.trim()
+                                        };
+                                    });
                                 }
                             """)
 
@@ -104,7 +110,7 @@ class DoubanScraper:
         """处理反爬虫验证"""
         try:
             if page.query_selector('#sub'):
-                page.wait_for_selector('#sub', state='visible', timeout=10000)
+                page.wait_for_selector('#sub', state='visible', timeout=11000)
                 page.click('#sub')
                 page.wait_for_load_state('networkidle')
                 time.sleep(2)
