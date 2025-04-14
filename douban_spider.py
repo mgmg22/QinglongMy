@@ -26,7 +26,8 @@ user_black_list = [
     "热情退散", "萌橙橙Aa", "肥肥鱼", "旧人旧城旧温存", "扎女孩的小辫子", "伊凡", "噼里啪啦", "卡布奇诺",
     "涂涂不糊涂", "山卡卡", "平凡", "小丸子", "张万万", "0791", "暗香疏影", "LRIN",
     "崽崽", "山卡卡", "看看我aa", "繁华如三千", "棠落落", "千里故人稀", "东方", "仰天大笑出门去",
-    "oppo", "山卡卡", "看看我aa", "繁华如三千", "棠落落", "千里故人稀", "东方", "仰天大笑出门去",
+    "oppo", "帅帅", "猫鱼薄荷", "Martin", "晓来雨霁东风软", "猫小咪", "ssong011", "胖胖宝宝",
+    "Alicia Xu", "蛊惑人心", "晓钟", "糟糕情书", "Vampire", "爱意", "ssong011", "胖胖宝宝",
 ]
 
 processed_links = set()
@@ -42,7 +43,7 @@ def filter_content(item: dict) -> bool:
         bool: True 表示通过过滤，False 表示被过滤掉
     """
     # 检查作者名中是否包含关键词
-    if "租" in item['author'] or "豆友" in item['author']:
+    if "租" in item['author'] or "豆友" in item['author'] or "公寓" in item['author']:
         return False
     # 检查链接是否已经处理过
     if item['link'] in processed_links:
@@ -63,7 +64,7 @@ def filter_content(item: dict) -> bool:
         # "3300", "3200", "3100", "3000"
         "青浦", "嘉定", "虹桥商务区",
         # "浦东",
-        "张江",
+        "张江", "世博",
         "长宁",
         # "静安",
         "普陀", "松江",
