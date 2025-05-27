@@ -14,6 +14,9 @@
 <a href="screenshots/preview-3.jpg">
 <img src="screenshots/preview-3.jpg" width="270"/>
 </a>
+<a href="screenshots/preview-5.jpg">
+<img src="screenshots/preview-5.jpg" width="270"/>
+</a>
 
 
 ## 功能
