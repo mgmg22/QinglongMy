@@ -86,7 +86,7 @@ commonBlackList = [word for item in [
     # ----无效----
     "特邀 受邀 瘦腰 收腰 临期 值得买",
     # ----超链接----
-    "vip.iqiyi.com music.163.com/prime/m/gift-receive ump.cmpay.com/info 和包生日 深i工",
+    "出门靠朋友 深i工",
     # ----问题----
     "么 问题 问问 问下 谢谢 请问 问一下 别问 请教 求 咋 怎样 咨询 赐教 啥 有问 行不 何解 不行 原因 帮忙看 哪来的 都多少 是多少 是不是 有谁 大佬",
     "果熟 有果 油果 彦祖 亦菲 多不 谁有 有没 如何 预算 你们都 几号 到底 多少出 哥哥们",
@@ -143,7 +143,7 @@ lowBlackList = [word for item in [
     # ----线下门店----
     "沪上阿姨 永和大王 沃尔玛 永辉 盒马 联华 costa 桌游 米其林 奥特莱斯 试驾",
     # ----无效----
-    "plus yzf 翼支付 svip 联通 移动套餐 美团圈圈 王卡 钻石会员 铂金 元梦之星 腾讯vip 聚惠出行",
+    "plus yzf 翼支付 svip 联通 移动套餐 美团圈圈 王卡 钻石会员 铂金 腾讯vip 聚惠出行",
 ] for word in item.split()]
 
 
