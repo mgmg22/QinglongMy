@@ -17,7 +17,6 @@ import json
 
 key_name = "xb"
 xb_list = []
-md_name = f"log_{key_name}_{get_day_string()}.md"
 conn = sqlite3.connect(f'{key_name}.db')
 cursor = conn.cursor()
 cursor.execute('''
@@ -295,9 +294,11 @@ def notify_markdown():
         dingding_bot_with_key(summary, markdown_text, f"{key_name.upper()}_BOT_TOKEN")
         if is_product_env():
             dingding_bot_with_key(summary, markdown_text, "FLN_BOT_TOKEN")
-        with open(md_name, 'a', encoding='utf-8') as f:
-            f.write("\n============================处理后数据===========================================\n")
-            f.write(markdown_text)
+        else:
+            md_name = f"log_{key_name}_{get_day_string()}.md"
+            with open(md_name, 'a', encoding='utf-8') as f:
+                f.write("\n============================处理后数据===========================================\n")
+                f.write(markdown_text)
     else:
         print("暂无线报！！")
 
