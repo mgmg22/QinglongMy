@@ -191,7 +191,12 @@ def filter_item(realtime_item):
 
 def get_hot_search():
     url = 'https://weibo.com/ajax/side/hotSearch'
-    resp = requests.get(url)
+    # 设置默认的请求头
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+    }
+    resp = requests.get(url, headers=headers)
     resp.encoding = 'utf-8'
     elements = resp.json()['data']['realtime']
     for realtime_item in elements:
