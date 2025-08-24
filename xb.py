@@ -40,8 +40,8 @@ def has_white_bank_name(content):
 
 whiteWordList = [word for item in [
     "云闪付 ysf xyk 性用卡 还款 工商银行 工商 工行 工银 e生活 建设银行 建行 建融 招商银行 招行 掌上生活 体验金 中信 动卡空间",
-    "tb 手淘 天猫 猫超 支付宝 zfb 转账 某付宝 微信 wx vx v.x 小程序 立减金 ljj 公众号 原文 推文 京东 狗东 jd 京豆 e卡 美团 elm",
-    # "淘宝 抖音 dy 闲鱼 同程 携程 途牛 霸王茶姬",
+    "手淘 天猫 猫超 支付宝 zfb 转账 某付宝 微信 wx vx v.x 小程序 立减金 ljj 公众号 原文 推文 京东 狗东 jd 京豆 e卡 美团 elm",
+    # "淘宝 tb 抖音 dy 闲鱼 同程 携程 途牛 霸王茶姬",
     "水 必中 红包 虹包 抽奖 秒到 保底 游戏 下载 话费 移动 和包 电信 q币 扣币 麦当劳 肯德基 必胜客 星巴克 瑞幸 朴朴 喜茶 礼品卡 星礼卡 深圳通 网上国网",
     "国补",
 ] for word in item.split()]
