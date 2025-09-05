@@ -17,9 +17,40 @@ import json
 
 key_name = "xb"
 xb_list = []
-conn = sqlite3.connect(f'{key_name}.db')
-cursor = conn.cursor()
-cursor.execute('''
+
+
+class DBHelper:
+    def __init__(self, db_name):
+
+        self.conn = sqlite3.connect(db_name)
+        self.cursor = self.conn.cursor()
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS titles (
+            id INTEGER PRIMARY KEY,
+            path INTEGER,
+            name TEXT UNIQUE NOT NULL,
+            href TEXT NOT NULL
+        )
+        ''')
+
+    def insert_many(self, items):
+        tuples_list = [(x['path'], x['title'], x['href']) for x in items]
+        self.cursor.executemany('INSERT OR IGNORE INTO titles (path,name, href) VALUES (?, ?, ?)', tuples_list)
+        self.conn.commit()
+
+    def fetch_all(self):
+        self.cursor.execute('SELECT * FROM titles')
+        return self.cursor.fetchall()
+
+    def close(self):
+        if self.cursor:
+            self.cursor.close()
+        if self.conn:
+            self.conn.close()
+
+    conn = sqlite3.connect(f'{key_name}.db')
+    cursor = conn.cursor()
+    cursor.execute('''
     CREATE TABLE IF NOT EXISTS titles (
         id INTEGER PRIMARY KEY,
         path INTEGER,
@@ -28,6 +59,8 @@ cursor.execute('''
     )
     ''')
 
+
+db = DBHelper(f'{key_name}.db')
 load_dotenv()
 
 cxkWhiteList = ["中国银行", "中行", "农业银行", "农行", "交通银行", "交行", "浦发", "邮储", "邮政", "光大", "兴业",
@@ -160,15 +193,12 @@ def filter_list(tr):
     if has_black_xyk_name(title):
         print("----无该行信用卡，已忽略" + '\t\t' + href)
         return False
-    if any(sub in title for sub in commonBlackList):
-        return False
-    if any(sub in title for sub in highBlackList):
-        return False
-    if any(sub in title for sub in lowBlackList):
+    all_blacklist = set(commonBlackList) | set(highBlackList) | set(lowBlackList)
+    if any(sub in title for sub in all_blacklist):
         return False
     if not has_white_word(title) and not has_white_bank_name(title):
         return False
-    for row in get_db_data():
+    for row in db.fetch_all():
         if path_id == row[1]:
             print('重复已忽略')
             return False
@@ -224,7 +254,7 @@ def get_top_summary():
 def notify_markdown():
     if xb_list:
         if is_product_env():
-            insert_db(xb_list)
+            db.insert_many(xb_list)
         helper = AIHelper()
         prompt = f'''请分析以下内容的价值，并返回符合预期的内容。
 
@@ -303,29 +333,9 @@ def notify_markdown():
         print("暂无线报！！")
 
 
-def insert_db(list):
-    # 使用列表推导式将每个元素转换成元组
-    tuples_list = [(x['path'], x['title'], x['href']) for x in list]
-    # 使用 executemany 来插入多条记录
-    cursor.executemany('INSERT OR IGNORE INTO titles (path,name, href) VALUES (?, ?, ?)', tuples_list)
-    conn.commit()
-
-
 def print_db():
-    for row in get_db_data():
+    for row in db.fetch_all():
         print(row)
-
-
-def get_db_data():
-    cursor.execute('SELECT * FROM titles')
-    return cursor.fetchall()
-
-
-def close_db():
-    if cursor:
-        cursor.close()
-    if conn:
-        conn.close()
 
 
 if __name__ == '__main__':
@@ -334,4 +344,4 @@ if __name__ == '__main__':
         get_top_summary()
         notify_markdown()
     finally:
-        close_db()
+        db.close()
