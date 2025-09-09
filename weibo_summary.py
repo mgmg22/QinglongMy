@@ -25,24 +25,20 @@ cursor.execute('''
 
 
 def filter_item(realtime_item):
-    # 剧集等 辟谣等
-    if realtime_item.get('flag_desc'):
-        return False
-    if realtime_item.get('is_ad'):
-        return False
-    title = realtime_item['word'].lower().strip()
-    state = realtime_item['label_name']
-    for row in get_db_data():
-        if title == row[1]:
-            if state == row[2]:
-                print('重复已忽略')
-                return False
-            if row[2] == '热':
-                print('上过热门已忽略')
-                return False
-            if state == '':
-                print('重复可忽略')
-                return False
+    title = realtime_item.get('title')
+    # TODO state
+    state = ""
+    # for row in get_db_data():
+    #     if title == row[1]:
+    #         if state == row[2]:
+    #             print('重复已忽略')
+    #             return False
+    #         if row[2] == '热':
+    #             print('上过热门已忽略')
+    #             return False
+    #         if state == '':
+    #             print('重复可忽略')
+    #             return False
     print(realtime_item)
     if title.startswith("一"):
         print("startswith 一")
@@ -182,7 +178,7 @@ def filter_item(realtime_item):
         return False
     # print(realtime_item)
     item = {
-        'num': realtime_item['realpos'],
+        # 'num': realtime_item['realpos'],
         'title': title,
         'state': state,
     }
@@ -190,17 +186,51 @@ def filter_item(realtime_item):
 
 
 def get_hot_search():
-    url = 'https://weibo.com/ajax/side/hotSearch'
-    # 设置默认的请求头
+    url = 'https://m.weibo.cn/api/container/getIndex?containerid=106003type%3D25%26t%3D3%26disable_hot%3D1%26filter_type%3Drealtimehot'
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
     }
     resp = requests.get(url, headers=headers)
     resp.encoding = 'utf-8'
-    elements = resp.json()['data']['realtime']
-    for realtime_item in elements:
-        filter_item(realtime_item)
+
+    try:
+        data = resp.json()
+        cards = data['data']['cards'][0]['card_group']
+    except (KeyError, IndexError, requests.exceptions.JSONDecodeError) as e:
+        print(f"解析错误: {e}")
+        print(resp.json())
+        return []
+
+    result = []
+    for i, k in enumerate(cards):
+        if i == 0:
+            continue
+        if not k.get('desc'):
+            continue
+
+        actionlog = k.get('actionlog', {})
+        if actionlog and 'ext' in actionlog and "ads_word" in actionlog['ext']:
+            continue
+
+        # 手动URL编码
+        query = k['desc'].replace(' ', '%20').replace('#', '%23').replace('&', '%26')
+
+        item = {
+            'id': k['desc'],
+            'title': k['desc'],
+            'extra': {'icon': None},
+            'url': f"https://s.weibo.com/weibo?q=%23{query}%23",  # 手动添加 # 的编码 %23
+            'mobileUrl': k.get('scheme')
+        }
+
+        # TODO state
+        if k.get('icon'):
+            item['extra']['icon'] = {
+                'url': k['icon'],
+                'scale': 1.5
+            }
+        result.append(item)
+        filter_item(item)
 
 
 def word_segment():
@@ -223,7 +253,7 @@ def notify_markdown():
         for item in summary_list:
             state_mark = f'【{item["state"]}】' if item['state'] else ''
             markdown_text += f'''
-{item['num']}.[{item['title']}](https://m.weibo.cn/search?containerid=231522type%3D1%26q%3D{quote(item['title'])}&_T_WM=16922097837&v_p=42){state_mark}
+[{item['title']}](https://m.weibo.cn/search?containerid=231522type%3D1%26q%3D{quote(item['title'])}&_T_WM=16922097837&v_p=42){state_mark}
 '''
         insert_db(summary_list)
         # sendNotify.push_me(get_title(), markdown_text, "markdown")
