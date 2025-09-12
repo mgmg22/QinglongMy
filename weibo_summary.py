@@ -28,17 +28,17 @@ def filter_item(realtime_item):
     title = realtime_item.get('title')
     # TODO state
     state = ""
-    # for row in get_db_data():
-    #     if title == row[1]:
-    #         if state == row[2]:
-    #             print('重复已忽略')
-    #             return False
-    #         if row[2] == '热':
-    #             print('上过热门已忽略')
-    #             return False
-    #         if state == '':
-    #             print('重复可忽略')
-    #             return False
+    for row in get_db_data():
+        if title == row[1]:
+            if state == row[2]:
+                print('重复已忽略')
+                return False
+            if row[2] == '热':
+                print('上过热门已忽略')
+                return False
+            if state == '':
+                print('重复可忽略')
+                return False
     print(realtime_item)
     if title.startswith("一"):
         print("startswith 一")

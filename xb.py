@@ -104,7 +104,7 @@ def get_complete_content(content):
             original_text = a_tag.get_text()
             if re.search(r'http[s]?://\S+', original_text):
                 # Replace the original text with markdown format
-                markdown_link = f'[{original_text}]({href})'
+                markdown_link = f'[{href}]({href})'
                 text = text.replace(original_text, markdown_link)
     return text
 
