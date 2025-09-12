@@ -271,7 +271,7 @@ def notify_markdown():
         "href": "示例链接",
         "src_list": ["图片链接1", "图片链接2"],
         "text": "示例文本内容",
-        "score": "「4分」优惠力度大，活动简单"
+        "score": "4分」优惠力度大，活动简单"
     }}
 ]
 
@@ -313,7 +313,7 @@ def notify_markdown():
         markdown_text = ''
         for item in json_data:
             markdown_text += f'''
-##### [{item['title']}{item['score']}]({item['href']})
+##### 📌[{item['title']}🌟{item['score']}]({item['href']})
 {item['text']}
 '''
             for img in item['src_list']:
