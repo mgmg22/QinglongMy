@@ -187,6 +187,8 @@ def filter_list(tr):
         return False
     if "618.html" in tr['href']:
         return False
+    if "pdd/zudui.php" in tr['href']:
+        return False
     href = 'http://www.0818tuan.com' + tr['href']
     match = re.search(r'/xbhd/(\d+)\.html', href)
     path_id = int(match.group(1))
