@@ -40,6 +40,7 @@ import sys
 import json
 import platform
 import requests
+import sendNotify
 
 # 本地开发时自动加载同目录 .env；已设置的真实环境变量优先，不受影响
 try:
@@ -47,13 +48,6 @@ try:
     load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 except ImportError:
     pass
-
-# 通知模块（同目录 sendNotify.py）；若缺失则降级为仅打印，不影响领取。
-try:
-    import sendNotify
-    _HAS_NOTIFY = True
-except Exception:
-    _HAS_NOTIFY = False
 
 
 def _save_env_values(values: dict):
@@ -218,8 +212,7 @@ def main():
     cred = resolve_credentials()
     flag, content = checkin_once(cred)
     print(f"RESULT={flag} | {content}")
-    if _HAS_NOTIFY:
-        sendNotify.serverJMy("WorkBuddy 每日签到", content)
+    sendNotify.serverJMy("WorkBuddy 每日签到", content)
 
 
 if __name__ == '__main__':

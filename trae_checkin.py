@@ -67,6 +67,7 @@ import hashlib
 import time
 import platform
 from datetime import datetime, timezone
+import sendNotify
 
 import requests
 from dotenv import load_dotenv
@@ -81,13 +82,6 @@ try:
 except ImportError:
     print("缺少依赖 pycryptodome，请执行: pip install pycryptodome")
     sys.exit(1)
-
-# 通知模块（同目录 sendNotify.py）；缺失则降级为仅打印
-try:
-    import sendNotify
-    _HAS_NOTIFY = True
-except Exception:
-    _HAS_NOTIFY = False
 
 
 def _save_env_values(values: dict):
@@ -174,6 +168,7 @@ def decrypt_trae_auth_info(encoded: str) -> dict:
         raise ValueError("TRAE desktop credential integrity check failed")
     return json.loads(payload.decode("utf-8"))
 
+
 def encrypt_trae_auth_info(plaintext: str) -> str:
     random_key = os.urandom(32)
     secret = bytes(a ^ b for a, b in zip(LEFT_SECRET, RIGHT_SECRET))
@@ -217,13 +212,13 @@ def ecdsa_sign_pure(private_pem: str, data: bytes) -> str:
         idx += 1
     if der[idx] != 0x02:
         raise ValueError("Missing r integer")
-    len_r = der[idx+1]
-    r_bytes = der[idx+2:idx+2+len_r]
+    len_r = der[idx + 1]
+    r_bytes = der[idx + 2:idx + 2 + len_r]
     idx += 2 + len_r
     if der[idx] != 0x02:
         raise ValueError("Missing s integer")
-    len_s = der[idx+1]
-    s_bytes = der[idx+2:idx+2+len_s]
+    len_s = der[idx + 1]
+    s_bytes = der[idx + 2:idx + 2 + len_s]
     r = int.from_bytes(r_bytes, "big")
     s = int.from_bytes(s_bytes, "big")
 
@@ -545,7 +540,7 @@ def build_checkin_headers(token: str, device_id: str) -> dict:
     return {
         "content-type": "application/json",
         "authorization": token if str(token).startswith("Cloud-IDE-JWT ")
-                          else f"Cloud-IDE-JWT {token}",
+        else f"Cloud-IDE-JWT {token}",
         "x-device-id": device_id or "",
     }
 
@@ -733,11 +728,11 @@ def main():
 
     print(f"RESULT={flag} | {content}")
 
-    if _HAS_NOTIFY and not os.environ.get("CHECKIN_NO_NOTIFY"):
-        try:
-            sendNotify.serverJMy(title, content)
-        except Exception as e:
-            print(f"[warn] 通知发送失败: {e}")
+    try:
+        sendNotify.serverJMy(title, content)
+    except Exception as e:
+        print(f"[warn] 通知发送失败: {e}")
+
 
 if __name__ == "__main__":
     main()

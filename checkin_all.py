@@ -20,7 +20,6 @@ new Env('每日Token签到汇总');
     - 子脚本在【导入阶段】失败（如依赖缺失会 sys.exit）时，仅跳过该脚本并在
       汇总中标注，不中断其余脚本。
     - 任一脚本运行异常均被捕获，结果如实汇总。
-    - 设置环境变量 CHECKIN_NO_NOTIFY=1 可关闭【最终合并推送】，便于本地调试。
 
 批量刷新（写回）token：在本机已登录三个桌面端的前提下，用一条命令即可把
     本机最新登录态写回 .env（等价逐个执行各脚本的 --export-env --save）：
@@ -40,6 +39,7 @@ import sys
 import importlib
 import traceback
 from datetime import datetime
+import sendNotify
 
 # 本地开发时自动加载同目录 .env
 try:
@@ -48,12 +48,6 @@ try:
 except ImportError:
     pass
 
-# 通知模块（同目录 sendNotify.py）；缺失则降级为仅打印
-try:
-    import sendNotify
-    _HAS_NOTIFY = True
-except Exception:
-    _HAS_NOTIFY = False
 
 
 # 聚合的脚本清单：(显示名, 模块文件名(不含 .py), 推送标题)
@@ -168,16 +162,10 @@ def main():
     print(summary)
     print("=" * 50)
 
-    no_push = os.environ.get("CHECKIN_NO_NOTIFY", "").strip() in ("1", "true", "True")
-    if _HAS_NOTIFY and not no_push:
-        try:
-            sendNotify.serverJMy("每日Token签到汇总", summary)
-        except Exception as e:
-            print(f"[warn] 合并推送失败: {e}")
-    elif no_push:
-        print("[info] CHECKIN_NO_NOTIFY 已设置，跳过合并推送")
-    else:
-        print("[warn] 未找到 sendNotify，跳过推送")
+    try:
+        sendNotify.serverJMy("每日Token签到汇总", summary)
+    except Exception as e:
+        print(f"[warn] 合并推送失败: {e}")
 
 
 if __name__ == "__main__":

@@ -87,6 +87,7 @@ import re
 import base64
 import urllib.parse
 from datetime import datetime, timezone
+import sendNotify
 
 import requests
 
@@ -94,20 +95,13 @@ import requests
 # 提供 VlessProxy（订阅/单链接 -> 本地 HTTP 代理）与 fetch_subscription。
 from vless_proxy import VlessProxy, fetch_subscription
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # 本地开发时自动加载同目录 .env；已设置的环境变量优先，不受影响。
 # python-dotenv 为本项目依赖（见 requirements.txt），统一用官方库加载，不做自定义兜底。
 from dotenv import load_dotenv
-load_dotenv()
 
-# 通知模块（同目录 sendNotify.py）；缺失则降级为仅打印
-try:
-    import sendNotify
-    _HAS_NOTIFY = True
-except Exception:
-    _HAS_NOTIFY = False
+load_dotenv()
 
 
 def _save_env_values(values: dict):
@@ -145,7 +139,7 @@ def _save_env_values(values: dict):
 
 # ===== 端点常量 =====
 HOST = "https://agent.minimax.io"
-RENEW_PATH = "/v1/api/user/renewal"          # 续期登录：旧 token 换新 token
+RENEW_PATH = "/v1/api/user/renewal"  # 续期登录：旧 token 换新 token
 STATUS_PATH = "/minimax-cloud/api/v1/signin/status"
 CLAIM_PATH = "/minimax-cloud/api/v1/signin/claim"
 
@@ -220,7 +214,7 @@ def _sign_request(path: str, token: str, params: dict, method: str, body: dict):
     # 设备参数里 unix 必须与 now_ms 完全一致（yy 内部 md5 也用同一毫秒值）
     params = dict(params)
     params["unix"] = str(now_ms)
-    params["client"] = "desktop"   # 拦截器末尾追加 client=desktop
+    params["client"] = "desktop"  # 拦截器末尾追加 client=desktop
 
     query = urllib.parse.urlencode(params)  # 与 requests 发送时的序列化一致
     has_search_params_path = f"{path}?{query}"
@@ -375,7 +369,7 @@ def _token_alive(token: str) -> bool:
         return False
     exp, _ = decode_token(token)
     if exp == 0:
-        return True          # 非 JWT，交给服务端判断
+        return True  # 非 JWT，交给服务端判断
     return exp - time.time() > 60
 
 
@@ -492,7 +486,7 @@ def is_rate_limited(http_status: int, data) -> bool:
 # 不依赖任何外部客户端、不下载二进制）拉起本地 HTTP 代理干净出网；签到前拉起，
 # checkin_once 结束（finally）时自动关闭。订阅地址由 MINIMAX_SUB 指定。
 # 订阅地址示例：https://rom.msdmcp.top/sub?token=54fb6f9b95583ec8ad17bad7493a276f
-_PROXIES = None        # requests 代理 dict，start_proxy_from_env() 设置
+_PROXIES = None  # requests 代理 dict，start_proxy_from_env() 设置
 _PROXY_INSTANCE = None  # 内置 VlessProxy 实例，stop_proxy() 时关闭
 
 
@@ -540,7 +534,7 @@ def _do_request(connect_base, token, params, path, method, body, timeout, proxie
     signed_params, headers, body_str = _sign_request(path, token, params, method, body)
     url = f"{connect_base}{path}"
     req = requests.Request(method.upper(), url, params=signed_params,
-                            headers=headers, data=body_str or None)
+                           headers=headers, data=body_str or None)
     prepared = req.prepare()
     try:
         session = requests.Session()
@@ -666,7 +660,7 @@ def checkin_once(cred: dict):
         for token, source in candidates:
             try:
                 flag, content = _try_checkin(user_id, token, source)
-            except Exception as e:                       # 单个候选异常不中断其余尝试
+            except Exception as e:  # 单个候选异常不中断其余尝试
                 flag, content = "ERROR", f"⚠️ 执行异常（token 来源：{source}）：{type(e).__name__}: {e}"
                 print(f"[miniMax] {content}")
             if flag in ("SUCCESS", "ALREADY_TODAY", "RATE_LIMITED"):
@@ -694,7 +688,7 @@ def _with_tag(tag: str, content: str) -> str:
     content = str(content or "")
     if not tag:
         return content
-    for icon in _LEADING_ICONS:                       # 开头是图标时插到图标后，保持视觉一致
+    for icon in _LEADING_ICONS:  # 开头是图标时插到图标后，保持视觉一致
         if content.startswith(icon):
             return f"{icon} {tag} {content[len(icon):].lstrip()}"
     return f"{tag} {content}"
@@ -774,15 +768,10 @@ def main():
 
     print(f"RESULT={flag} | {content}")
 
-    # 本地调试不想刷推送时：CHECKIN_NO_NOTIFY=1
-    no_push = os.environ.get("CHECKIN_NO_NOTIFY", "").strip() in ("1", "true", "True")
-    if _HAS_NOTIFY and not no_push:
-        try:
-            sendNotify.serverJMy(title, content)
-        except Exception as e:
-            print(f"[warn] 通知发送失败: {e}")
-    elif no_push:
-        print("[info] CHECKIN_NO_NOTIFY 已设置，跳过推送")
+    try:
+        sendNotify.serverJMy(title, content)
+    except Exception as e:
+        print(f"[warn] 通知发送失败: {e}")
 
 
 if __name__ == "__main__":
