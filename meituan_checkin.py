@@ -15,15 +15,24 @@
 
 说明：
     - 脚本【默认只读取上述环境变量】；缺失 MT_TOKEN 时 checkin 阶段判为 NO_CREDENTIAL。
-    - 兼容 Node 端 run.js 已扫码登录的情况：当 MT_TOKEN 未设置时，脚本回退读取
+    - 兼容本机已扫码登录的情况：当 MT_TOKEN 未设置时，脚本回退读取
       本机 pt-passport 缓存（~/.workbuddy/credentials/.../pt_passport_auth.json）
       与插件 config.json 的 aiScene；部署到青龙 / 容器时请直接设置环境变量。
     - 本地每日缓存 meituan_today_cache.json 做每日去重，避免重复打接口。
-    - 美团 token 由 Node 端 run.js 扫码登录获得（无自动续期）；获得后填入 MT_TOKEN。
-      `--export-env`（配合 --save 可写回 .env）可从本机缓存导出 token。
+    - 美团 token 由 pt-passport 扫码登录获得（无自动续期）。本脚本内置
+      `login` 命令，可用 Python 端直接触发重新扫码（底层仍调用同款 pt-passport 的
+      Node 实现，二维码展示/轮询/写 env 均为 Python），无需切回 Node run.js：
+        python meituan_checkin.py login            # 交互扫码，打印 MT_TOKEN 等
+        python meituan_checkin.py login --save     # 扫码后写回同目录 .env
+        python meituan_checkin.py --export-env --login --save
+                                                     # 无缓存时先扫码再导出并保存
+      登录态统一写入 ~/.workbuddy/credentials/.../pt_passport_auth.json，
+      与插件扫码登录共用；也可把 token 直接填进环境变量 MT_TOKEN 部署到青龙。
 
-刷新 token：`python meituan_checkin.py --export-env --save`
-            （要求本机已用 Node 端 run.js 扫码登录，写入 pt_passport_auth.json）
+用法小结：
+    python meituan_checkin.py                 # 领券（默认）
+    python meituan_checkin.py login [--save] # Python 端重新扫码
+    python meituan_checkin.py --export-env [--login] [--save]
 =====================================================
 """
 
@@ -31,7 +40,10 @@ import os
 import re
 import sys
 import json
+import time
+import subprocess
 import datetime
+import urllib.request
 import requests
 import sendNotify
 
@@ -41,12 +53,15 @@ try:
 except ImportError:
     pass
 
-# 内置稳定默认 client_id（与 Node run.js 一致）
+# 内置稳定默认 client_id（与插件保持一致）
 DEFAULT_CLIENT_ID = "c6f50b5a1e2f4e2bb00a3e2f58df3ced"
 COUPON_URL = "https://media.meituan.com/fulishemini/couponActivity/sendCouponWork"
 HOME = os.path.expanduser("~")
 AUTH_DIR = os.path.join(HOME, ".workbuddy", "credentials", "meituan-living-deals-assistant")
 PT_PASSPORT_AUTH = os.path.join(AUTH_DIR, "pt_passport_auth.json")
+# 插件 scripts 目录（用于定位 pt-passport 的 Node 实现）
+SCRIPTS_DIR = os.path.join(HOME, ".workbuddy", "plugins", "marketplaces", "experts",
+                           "plugins", "meituan-living-assistant", "scripts")
 CONFIG_CANDIDATES = [
     os.path.join(HOME, ".workbuddy", "plugins", "marketplaces", "experts",
                  "plugins", "meituan-living-assistant", "scripts", "config.json"),
@@ -54,6 +69,31 @@ CONFIG_CANDIDATES = [
 ]
 # 本地每日缓存（与脚本同目录，青龙可读写）
 CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "meituan_today_cache.json")
+
+# ── Node / pt-passport 发现（用于 Python 端重新扫码登录） ──
+# 说明：美团扫码登录的签名/OAuth 逻辑在 pt-passport（Node 实现，已混淆），
+# 纯 Python 复刻不可行也不稳；因此「重新扫码」由 Python 编排该 CLI 完成，
+# 但二维码展示、轮询、写 env 全部用 Python 实现。
+def _find_node():
+    if os.environ.get("MT_NODE_BIN"):
+        return os.environ["MT_NODE_BIN"]
+    for cand in [
+        os.path.join(HOME, ".workbuddy", "binaries", "node", "versions", "22.22.2-2", "node.exe"),
+        os.path.join(HOME, ".workbuddy", "binaries", "node", "versions", "22.22.2-2", "node"),
+    ]:
+        if os.path.exists(cand):
+            return cand
+    return "node"  # 回退 PATH
+
+
+def _find_pt_passport_js():
+    if os.environ.get("MT_PT_PASSPORT_BIN"):
+        return os.environ["MT_PT_PASSPORT_BIN"]
+    return os.path.join(SCRIPTS_DIR, "node_modules", "@mtuser", "pt-passport", "dist", "index.js")
+
+
+NODE_BIN = _find_node()
+PT_PASSPORT_JS = _find_pt_passport_js()
 
 _TAB_ORDER = ["外卖", "美食团购", "美团闪购", "休闲娱乐", "生活服务", "丽人医疗", "更多福利"]
 _TAB_DISPLAY = {"更多福利": "其他"}
@@ -241,6 +281,91 @@ def read_local_credential():
     return {"token": token, "client_id": cid, "ai_scene": load_ai_scene()}
 
 
+def _run_passport(args, timeout=600):
+    """调用 pt-passport CLI，返回 (exit_code, stdout)。
+    登录态统一写入 PT_PASSPORT_AUTH_FILE，与插件扫码登录共用。"""
+    if not os.path.exists(PT_PASSPORT_JS):
+        return (-1, "")
+    env = dict(os.environ)
+    env["HOME"] = HOME
+    env["PT_PASSPORT_AUTH_FILE"] = PT_PASSPORT_AUTH
+    env.pop("NODE_OPTIONS", None)
+    try:
+        p = subprocess.run(
+            [NODE_BIN, PT_PASSPORT_JS] + list(args),
+            capture_output=True, text=True, timeout=timeout, env=env,
+        )
+        return (p.returncode, (p.stdout or "").strip())
+    except Exception as e:  # noqa
+        return (-2, str(e))
+
+
+def _qr_image_url(url):
+    """调用美团服务端接口换取可扫描的二维码图片 URL（对应 run.js qrcode 命令）。"""
+    api = "https://click.meituan.com/cps/ai/product/getQrCodeImage"
+    body = json.dumps({"originalUrl": url, "clientSource": "coupon-fusion-workbuddy"}).encode("utf-8")
+    req = urllib.request.Request(api, data=body, method="POST")
+    req.add_header("Content-Type", "application/json")
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        return data.get("data") if isinstance(data, dict) else None
+    except Exception:
+        return None
+
+
+def login_flow(env="prod", max_wait=300):
+    """重新扫码登录（Python 端）：get-code -> 展示二维码 -> poll-token 阻塞等待，直到拿到 Token。
+    成功后会写入 pt_passport_auth.json（与插件共用同一份登录态），并返回凭据 dict；
+    失败（如超时未扫码）返回 None。"""
+    cid = _clean(os.environ.get("MT_CLIENT_ID") or DEFAULT_CLIENT_ID)
+    env_flag = ["--env", env] if env == "test" else []
+    print("▶ 正在生成美团登录二维码 ...")
+    code, out = _run_passport(["auth", "get-code", "--client_id", cid] + env_flag)
+    token = None
+    m = re.search(r"Token:\s*(\S+)", out)
+    if m:
+        token = m.group(1).strip()
+    link = None
+    lm = re.search(r"AUTH_LINK:\s*(\S+)", out)
+    if lm:
+        link = lm.group(1).strip()
+
+    if not token and link:
+        print("🔗 请扫码登录（打开链接或扫描下方二维码）：")
+        print("   %s" % link)
+        qrimg = _qr_image_url(link)
+        if qrimg:
+            print("   二维码图片：%s" % qrimg)
+        try:  # 可选：本地生成 PNG（需 pip install qrcode）
+            import qrcode  # type: ignore
+            png = os.path.join(os.path.dirname(os.path.abspath(__file__)), "meituan_login_qr.png")
+            qrcode.make(link).save(png)
+            print("   本地二维码已保存：%s" % png)
+        except Exception:
+            pass
+        print("⏳ 等待扫码确认（最多 %d 秒）..." % max_wait)
+        # pt-passport 的 poll-token 为阻塞式（内部轮询扫码结果），单次调用即可，
+        # 不要反复中断它；超时后再用下方兜底逻辑判断是否需重新 get-code。
+        code, out = _run_passport(["auth", "poll-token", "--client_id", cid], timeout=max_wait)
+        tm = re.search(r"Token:\s*(\S+)", out or "")
+        if tm:
+            token = tm.group(1).strip()
+        # 兜底：poll 失败（后端竞态：用户已扫码成功但 poll 会话已关闭）时，
+        # 再 get-code 确认是否已拿到 token（与 run.js 行为一致）
+        if not token and (code != 0 or "❌" in (out or "")):
+            fc, fout = _run_passport(["auth", "get-code", "--client_id", cid] + env_flag)
+            fm = re.search(r"Token:\s*(\S+)", fout or "")
+            if fm:
+                token = fm.group(1).strip()
+
+    if not token:
+        print("❌ 未能获取登录 Token，请确认已扫码并完成授权；可重试：python meituan_checkin.py login")
+        return None
+    print("✅ 登录成功，Token 已写入本地缓存（pt_passport_auth.json）。")
+    return {"token": token, "client_id": cid, "ai_scene": load_ai_scene()}
+
+
 def _save_env_values(values):
     """把导出的环境变量写回同目录 .env（仅更新/追加给定 key，保留其它内容）。"""
     env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
@@ -273,10 +398,17 @@ def _save_env_values(values):
 
 
 def export_env():
-    """--export-env：读取本机登录态并打印/保存环境变量。"""
+    """--export-env：读取本机登录态并打印/保存环境变量。
+    若本机无登录态且带了 --login，则先触发 Python 端扫码登录再导出。"""
+    if "--login" in sys.argv and not read_local_credential():
+        print("未发现美团登录态，尝试用 Python 端重新扫码登录 ...")
+        login_flow()
     c = read_local_credential()
     if not c:
-        print("未发现美团登录态，请先在本机用 Node 端 run.js 扫码登录（写入 pt_passport_auth.json）")
+        print("未发现美团登录态，请先扫码登录：")
+        print("  python meituan_checkin.py login            # Python 端交互扫码")
+        print("  python meituan_checkin.py login --save     # 扫码后写回同目录 .env")
+        print("  python meituan_checkin.py --export-env --login --save  # 无缓存时先扫码再导出")
         return 1
     values = {
         "MT_TOKEN": c["token"],
@@ -322,8 +454,8 @@ def checkin_once(cred):
 
     if not token:
         return "NO_CREDENTIAL", ("未获取到美团登录 Token，请设置环境变量 MT_TOKEN"
-                                 "（或先在本机用 Node 端 run.js 扫码登录后执行 "
-                                 "python meituan_checkin.py --export-env --save 刷新）")
+                                 "，或先扫码登录：python meituan_checkin.py login [--save]"
+                                 "，再执行 python meituan_checkin.py --export-env --save 刷新")
 
     # 本地每日缓存命中 -> 视为今日已领
     cached = load_today_cache()
@@ -373,7 +505,8 @@ def checkin_once(cred):
         return "ALREADY_TODAY", "ℹ️ 您今天已经领取过美团的优惠券，每天只能领取一次，明天再来哦～"
 
     if c in (401,):
-        return "TOKEN_EXPIRED", "⚠️ 登录已过期，请重新扫码登录后更新环境变量 MT_TOKEN"
+        return "TOKEN_EXPIRED", ("⚠️ 登录已过期，请用 Python 端重新扫码登录并刷新："
+                                 "python meituan_checkin.py login --save")
 
     if c in (509, 50200):
         return "RATE_LIMITED", "⏳ 请求过于频繁（限流），请稍后重试"
@@ -382,6 +515,20 @@ def checkin_once(cred):
 
 
 def main():
+    if "login" in sys.argv:
+        c = login_flow()
+        if not c:
+            sys.exit(1)
+        vals = {"MT_TOKEN": c["token"], "MT_CLIENT_ID": c["client_id"]}
+        if c.get("ai_scene"):
+            vals["MT_AISCENE"] = c["ai_scene"]
+        for k, v in vals.items():
+            print(f"{k}={v}")
+        if "--save" in sys.argv:
+            if _save_env_values(vals):
+                print("# 已将上述变量写回 .env")
+        sys.exit(0)
+
     if "--export-env" in sys.argv:
         sys.exit(export_env())
 

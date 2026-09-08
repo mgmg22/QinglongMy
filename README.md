@@ -20,8 +20,8 @@
 * [workbuddy_checkin](workbuddy_checkin.py) WorkBuddy 每日积分自动签到（100积分/天，连续第7天1000积分），**默认只读环境变量**，`--export-env`（或 `--export-env --save` 写回 .env）可读取本机登录态刷新 token，幂等可重复运行
 * [trae_checkin](trae_checkin.py) Trae Work 每日积分自动签到，**默认只读环境变量**（不再自动读本机）；**内置自动续期/自愈**：access token 仅约 14 天有效，脚本用 `refreshToken` + 设备 ECDSA 私钥（`--export-keys` 引导，纯标准库签名、无需第三方库）向 `ExchangeToken` 换发新 token，在「无 token / 即将过期(<48h) / 鉴权失败」时自动续期并重试，续期结果写回 `.trae_token.json` 缓存（青龙环境靠它自愈）；`--export-keys`（同 `--export-env`）/ `--renew` 配合 `--save` 可写回 .env 刷新
 * [minimax_checkin](minimax_checkin.py) MiniMax Code 每日积分自动签到（400积分/天，第4、7天1000积分），**默认只读环境变量**（不再自动读本机），逆向 `yy`/`x-signature` 签名；**每次运行先调 `/v1/api/user/renewal` 续期（相当于先登录）再签到**，新 token 自动写回 `.minimax_token.json` 缓存（青龙环境靠它自愈，token 永不失效）；`--export-env`（先续期再导出）/`--renew`（仅续期）配合 `--save` 可写回 .env 刷新
-* [meituan_checkin](meituan_checkin.py) 美团每日领券，POST 发券接口、Token 走请求体（无需 Cookie），**默认只读环境变量**（MT_TOKEN / MT_AISCENE / MT_CLIENT_ID），本地每日缓存去重，`--export-env` 可从本机 pt-passport 缓存导出 token 写回 .env
-* [checkin_all](checkin_all.py) 聚合签到（推荐）：**只需设一个定时**，依次跑 WorkBuddy / Trae Work / MiniMax Code 签到，合并结果后**只发一次推送**。各子脚本的单独定时可停用/删除。另支持 `python checkin_all.py --export-env --save` **一条命令批量刷新 token**（等价逐个执行各子脚本的 `--export-env --save`），要求本机对应桌面端/已登录态均已就绪
+* [meituan_checkin](meituan_checkin.py) 美团每日领券，POST 发券接口、Token 走请求体（无需 Cookie），**默认只读环境变量**（MT_TOKEN / MT_AISCENE / MT_CLIENT_ID），本地每日缓存去重，内置 `login` 命令可用 Python 端独立完成重新扫码登录（无需切回 Node run.js），`--export-env` 可从本机 pt-passport 缓存导出 token 写回 .env
+* [checkin_all](checkin_all.py) 聚合签到（推荐）：**只需设一个定时**，依次跑 WorkBuddy / Trae Work / MiniMax Code ，合并结果后**只发一次推送**。各子脚本的单独定时可停用/删除。另支持 `python checkin_all.py --export-env --save` **一条命令批量刷新 token**（等价逐个执行各子脚本的 `--export-env --save`），要求本机对应桌面端/已登录态均已就绪
 
 ## 安装依赖库
 
@@ -119,7 +119,8 @@ export MINIMAX_DEVICE_ID=
 export MINIMAX_SUB=
 
 ## 美团每日领券（meituan_checkin.py）
-# 脚本【默认只读取以下环境变量】；美团的 token 由 Node 端 run.js 扫码登录获得（无自动续期）
+# 脚本【默认只读取以下环境变量】；美团的 token 由扫码登录获得（无自动续期）
+# Python 端即可独立完成重新扫码：python meituan_checkin.py login [--save]，无需切回 Node 端 run.js
 # 获得后填入 MT_TOKEN 即可；未设置时脚本会回退读本机 pt-passport 缓存
 export MT_TOKEN=
 export MT_AISCENE=        # 可选：场景标识，留空时回退读插件 config.json
