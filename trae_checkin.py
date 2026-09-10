@@ -604,7 +604,7 @@ def checkin_once(cred: dict):
     sc, sb = api_call(host, token, device_id, STATUS_PATH)
     if isinstance(sb, dict) and sb.get("checked_in"):
         pts = query_points(host, token, device_id)
-        extra = f"，剩余积分 {pts}" if pts is not None else ""
+        extra = f"\n- 总可用积分：{pts:,.2f}" if pts is not None else ""
         return "ALREADY_TODAY", f"ℹ️ 今日已签到{extra}"
 
     if is_auth_failure(sc, sb):
@@ -618,7 +618,7 @@ def checkin_once(cred: dict):
             sc, sb = api_call(host, token, device_id, STATUS_PATH)
             if isinstance(sb, dict) and sb.get("checked_in"):
                 pts = query_points(host, token, device_id)
-                extra = f"，剩余积分 {pts}" if pts is not None else ""
+                extra = f"\n- 总可用积分：{pts:,.2f}" if pts is not None else ""
                 return "ALREADY_TODAY", f"ℹ️ 今日已签到{extra}（已自动续期）"
             if is_auth_failure(sc, sb):
                 return "AUTH_EXPIRED", f"⚠️ 续期后再次鉴权失败（HTTP {sc}），请检查设备证明材料是否完整"
@@ -651,7 +651,7 @@ def checkin_once(cred: dict):
         points = ((cb.get("data") or {}).get("points")) or cb.get("points")
         message = cb.get("message") or cb.get("msg") or ""
         pts = query_points(host, token, device_id)
-        extra = f"，剩余积分 {pts}" if pts is not None else ""
+        extra = f"\n- 总可用积分：{pts:,.2f}" if pts is not None else ""
         text = "签到成功" if message == "success" else message
         gain = f"本次 +{points} 积分" if points else text
         return "SUCCESS", f"✅ {gain}{extra}"
