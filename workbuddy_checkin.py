@@ -171,6 +171,52 @@ def _call(token, uid, path):
         return 0, {"error": str(e)}
 
 
+def _num(v):
+    """把可能是字符串/数字的剩余值安全地转 float，无法解析记 0。"""
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _fmt(v):
+    """余额取整显示。"""
+    return str(int(round(v)))
+
+
+def _get_total_credits(token, uid):
+    """读取『总剩余积分』（与 WorkBuddy 客户端展示口径一致）。
+
+    来源是签到状态接口的 total_credits 字段（官方页面『总剩余积分』的直接来源），
+    优先 /v2/billing/meter/checkin-activity-status，回退到 STATUS_PATH。
+    返回 float 或 None（无数据 / 接口异常）。"""
+    for path in ("/v2/billing/meter/checkin-activity-status", STATUS_PATH):
+        try:
+            sc, sb = _call(token, uid, path)
+        except Exception:
+            continue
+        if isinstance(sb, dict):
+            tc = (sb.get("data") or {}).get("total_credits")
+            if tc is not None:
+                return _num(tc)
+    return None
+
+
+def fetch_balance(token, uid, known_total=None):
+    """查询总剩余积分并拼接文案。
+
+    『总剩余积分』取自签到状态接口的 total_credits（与 WorkBuddy 客户端展示口径一致）；
+    known_total 由 checkin_once 从已获取的 status 响应直接传入，避免重复请求。
+    任何异常 / 无数据返回空串，不影响主流程。"""
+    try:
+        total = known_total if known_total is not None else _get_total_credits(token, uid)
+    except Exception:
+        return ""
+    if total is None:
+        return ""
+    return f"- 总剩余积分：{_fmt(total)}"
+
+
 def checkin_once(cred):
     """执行单次签到，返回 (结果标记, 通知文本)。不做重试：结果如实上报。"""
     cred = cred or {}
@@ -181,8 +227,11 @@ def checkin_once(cred):
         return "NO_CREDENTIAL", ("未获取到 WorkBuddy 登录态，请设置环境变量 WB_ACCESS_TOKEN / WB_USER_ID"
                                  "（或运行 python workbuddy_checkin.py --export-env --save 刷新）")
 
-    # 查询状态（仅参考，today_checked_in 不可靠）
+    # 查询状态（仅参考，today_checked_in 不可靠）；同时取总剩余积分供余额展示
     sc, sb = _call(token, uid, STATUS_PATH)
+    status_total = None
+    if isinstance(sb, dict):
+        status_total = (sb.get("data") or {}).get("total_credits")
 
     # 执行领取（幂等：code=10001 表示今日已签）
     cc, cb = _call(token, uid, CHECKIN_PATH)
@@ -196,9 +245,16 @@ def checkin_once(cred):
             d = cb.get("data", {})
             content = (f"✅ 领取成功\n- 本次积分：{d.get('credit')}\n"
                        f"- 连续签到：第 {d.get('streak_days')} 天")
+            bal = fetch_balance(token, uid, known_total=status_total)
+            if bal:
+                content += f"\n{bal}"
             return "SUCCESS", content
         if code == 10001:
-            return "ALREADY_TODAY", "ℹ️ 今日已签到，无需重复领取"
+            content = "ℹ️ 今日已签到，无需重复领取"
+            bal = fetch_balance(token, uid, known_total=status_total)
+            if bal:
+                content += f"\n{bal}"
+            return "ALREADY_TODAY", content
         if cc in (401, 403):
             return "TOKEN_EXPIRED", f"⚠️ 令牌失效（HTTP {cc}），请打开 WorkBuddy 桌面端刷新登录态后重试"
         return "FAIL", f"⚠️ 签到未成功：HTTP {cc} code={code} msg={cb.get('msg')}"
