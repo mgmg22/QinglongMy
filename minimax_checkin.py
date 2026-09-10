@@ -646,7 +646,6 @@ def checkin_once(cred: dict):
     """
     cred = cred or {}
     user_id = clean_env_value(cred.get("user_id", ""))
-    tag = cred.get("user_name") or user_id or "未知用户"
 
     candidates = _candidate_tokens(cred)
     if not candidates:
@@ -664,7 +663,7 @@ def checkin_once(cred: dict):
                 flag, content = "ERROR", f"⚠️ 执行异常（token 来源：{source}）：{type(e).__name__}: {e}"
                 print(f"[miniMax] {content}")
             if flag in ("SUCCESS", "ALREADY_TODAY", "RATE_LIMITED"):
-                return flag, _with_tag(tag, content)
+                return flag, content
             last = (flag, content)
             print(f"[miniMax] token 来源 {source} 失败：RESULT={flag} | {content}")
 
@@ -677,21 +676,6 @@ def checkin_once(cred: dict):
         return flag, content
     finally:
         stop_proxy()
-
-
-_LEADING_ICONS = ("✅", "ℹ️", "⏳", "⚠️", "❌", "🎉")
-
-
-def _with_tag(tag: str, content: str) -> str:
-    """把用户标识插到图标后面：'✅ 本次 +400 积分' -> '✅ 547901267608952833 本次 +400 积分'。"""
-    tag = str(tag or "").strip()
-    content = str(content or "")
-    if not tag:
-        return content
-    for icon in _LEADING_ICONS:  # 开头是图标时插到图标后，保持视觉一致
-        if content.startswith(icon):
-            return f"{icon} {tag} {content[len(icon):].lstrip()}"
-    return f"{tag} {content}"
 
 
 def export_env():
