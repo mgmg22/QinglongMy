@@ -18,7 +18,6 @@
     - 兼容本机已扫码登录的情况：当 MT_TOKEN 未设置时，脚本回退读取
       本机 pt-passport 缓存（~/.workbuddy/credentials/.../pt_passport_auth.json）
       与插件 config.json 的 aiScene；部署到青龙 / 容器时请直接设置环境变量。
-    - 本地每日缓存 meituan_today_cache.json 做每日去重，避免重复打接口。
     - 美团 token 由 pt-passport 扫码登录获得（无自动续期）。本脚本内置
       `login` 命令，可用 Python 端直接触发重新扫码（底层仍调用同款 pt-passport 的
       Node 实现，二维码展示/轮询/写 env 均为 Python），无需切回 Node run.js：
@@ -67,8 +66,6 @@ CONFIG_CANDIDATES = [
                  "plugins", "meituan-living-assistant", "scripts", "config.json"),
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"),
 ]
-# 本地每日缓存（与脚本同目录，青龙可读写）
-CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "meituan_today_cache.json")
 
 # ── Node / pt-passport 发现（用于 Python 端重新扫码登录） ──
 # 说明：美团扫码登录的签名/OAuth 逻辑在 pt-passport（Node 实现，已混淆），
@@ -236,31 +233,6 @@ def build_display_coupons(coupons):
 def build_display_result(coupons):
     return {"count_str": build_count_str(coupons),
             "display_coupons": build_display_coupons(coupons)}
-
-
-def today_str():
-    return datetime.date.today().strftime("%Y-%m-%d")
-
-
-def load_today_cache():
-    try:
-        if not os.path.exists(CACHE_PATH):
-            return None
-        cache = json.load(open(CACHE_PATH, encoding="utf-8"))
-        if cache.get("date") == today_str():
-            return cache.get("data")
-    except Exception:
-        return None
-    return None
-
-
-def save_today_cache(data):
-    try:
-        os.makedirs(os.path.dirname(CACHE_PATH) or ".", exist_ok=True)
-        json.dump({"date": today_str(), "data": data},
-                  open(CACHE_PATH, "w", encoding="utf-8"), ensure_ascii=False)
-    except Exception:
-        pass
 
 
 def resolve_credentials():
@@ -457,15 +429,6 @@ def checkin_once(cred):
                                  "，或先扫码登录：python meituan_checkin.py login [--save]"
                                  "，再执行 python meituan_checkin.py --export-env --save 刷新")
 
-    # 本地每日缓存命中 -> 视为今日已领
-    cached = load_today_cache()
-    if cached:
-        cc = cached.get("coupon_count", 0)
-        cs = cached.get("count_str", "")
-        content = (f"ℹ️ 今天已领取过美团优惠券\n- 共 {cc} 张（{cs}）\n"
-                   f"- 活动：{cached.get('activity_name', '')}")
-        return "ALREADY_TODAY", content
-
     code, resp = _call(token, ai_scene, client_id)
 
     if code == 0:
@@ -482,15 +445,6 @@ def checkin_once(cred):
         coupon_list = data.get("couponList") or []
         formatted = [format_coupon(x) for x in coupon_list]
         display = build_display_result(formatted)
-        result = {
-            "coupon_count": len(formatted),
-            "coupons": formatted,
-            "count_str": display["count_str"],
-            "display_coupons": display["display_coupons"],
-            "activity_name": data.get("activityName", ""),
-            "activity_link": data.get("activityLink", ""),
-        }
-        save_today_cache(result)
         lines = [f"✅ 美团领券成功，共 {len(formatted)} 张"]
         if display["count_str"]:
             lines.append(f"- 分类：{display['count_str']}")
