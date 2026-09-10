@@ -535,7 +535,8 @@ def main():
     cred = resolve_credentials()
     flag, content = checkin_once(cred)
     print(f"RESULT={flag} | {content}")
-    sendNotify.serverJMy("美团每日领券", content)
+    icon = "✅" if flag in ("SUCCESS", "ALREADY_TODAY") else "❌"
+    sendNotify.serverJMy(f"美团每日领券{icon}", content)
 
 
 if __name__ == "__main__":
