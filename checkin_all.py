@@ -112,7 +112,7 @@ def build_summary(results):
             ok += 1
     lines.append("")
     lines.append(f"**共 {len(results)} 项，成功/已签 {ok} 项**")
-    return "\n".join(lines)
+    return "\n".join(lines), ok, len(results)
 
 
 def export_all():
@@ -157,13 +157,14 @@ def main():
         # 实时打印（仅首行，便于日志查看；完整内容见下方汇总）
         print(f"\n[{name}] RESULT={flag} | {str(content).splitlines()[0]}")
 
-    summary = build_summary(results)
+    summary, ok, total = build_summary(results)
     print("\n" + "=" * 50)
     print(summary)
     print("=" * 50)
 
+    title = f"每日Token签到汇总✅{ok}/{total}"
     try:
-        sendNotify.serverJMy("每日Token签到汇总", summary)
+        sendNotify.serverJMy(title, summary)
     except Exception as e:
         print(f"[warn] 合并推送失败: {e}")
 
