@@ -184,10 +184,27 @@ def _fmt(v):
     return str(int(round(v)))
 
 
+def _extract_total_credits(resp):
+    """从签到/活动状态响应里尽可能稳健地提取『总剩余积分』。
+
+    兼容多种字段命名（官方 /v2/billing/meter/checkin-activity-status 与
+    /checkin-status 可能用 total_credits / totalCredits / balance / remaining_credits）。
+    返回 float 或 None。"""
+    if not isinstance(resp, dict):
+        return None
+    d = resp.get("data") if isinstance(resp.get("data"), dict) else resp
+    for key in ("total_credits", "totalCredits", "remaining_credits",
+                "remainingCredits", "balance", "credits"):
+        if key in d and d[key] is not None:
+            v = _num(d[key])
+            if v >= 0:
+                return v
+    return None
+
+
 def _get_total_credits(token, uid):
     """读取『总剩余积分』（与 WorkBuddy 客户端展示口径一致）。
 
-    来源是签到状态接口的 total_credits 字段（官方页面『总剩余积分』的直接来源），
     优先 /v2/billing/meter/checkin-activity-status，回退到 STATUS_PATH。
     返回 float 或 None（无数据 / 接口异常）。"""
     for path in ("/v2/billing/meter/checkin-activity-status", STATUS_PATH):
@@ -196,22 +213,25 @@ def _get_total_credits(token, uid):
         except Exception:
             continue
         if isinstance(sb, dict):
-            tc = (sb.get("data") or {}).get("total_credits")
+            tc = _extract_total_credits(sb)
             if tc is not None:
-                return _num(tc)
+                return tc
     return None
 
 
 def fetch_balance(token, uid, known_total=None):
     """查询总剩余积分并拼接文案。
 
-    『总剩余积分』取自签到状态接口的 total_credits（与 WorkBuddy 客户端展示口径一致）；
-    known_total 由 checkin_once 从已获取的 status 响应直接传入，避免重复请求。
+    『总剩余积分』始终以活动状态接口 /checkin-activity-status 为准——
+    实测 /checkin-status 的 total_credits 经常为 0（不代表真实余额），而活动状态接口
+    返回的是真实剩余（如 1500）。known_total 仅作为查询异常时的兜底。
     任何异常 / 无数据返回空串，不影响主流程。"""
     try:
-        total = known_total if known_total is not None else _get_total_credits(token, uid)
+        total = _get_total_credits(token, uid)
     except Exception:
-        return ""
+        total = None
+    if total is None:
+        total = known_total
     if total is None:
         return ""
     return f"- 总剩余积分：{_fmt(total)}"

@@ -197,36 +197,40 @@ def _der_encode_signature(r: int, s: int) -> bytes:
     return b"\x30" + bytes([len(body)]) + body
 
 def ecdsa_sign_pure(private_pem: str, data: bytes) -> str:
-    """用设备 EC 私钥对数据做 ECDSA P-256/SHA-256 签名，返回 base64(DER)。"""
+    """用设备 EC 私钥对数据做 ECDSA P-256/SHA-256 签名，返回 base64(DER)，并做低 s 归一化。
+
+    注意：pycryptodome 的 DSS.sign 在不同版本下可能返回【裸 r||s（64 字节）】
+    或【DER(0x30 开头)】。本函数两者都兼容：先解析出 (r, s)，再统一重编码为 DER。
+    """
     key = ECC.import_key(private_pem)
     signer = DSS.new(key, 'fips-186-3')
-    sig = signer.sign(SHA256.new(data))  # DER 编码
+    sig = signer.sign(SHA256.new(data))
 
-    # 解析 DER 提取 r 和 s（格式：0x30 0x44 0x02 len r 0x02 len s）
-    # 简单解析：跳过 0x30 和 len，然后 0x02 len_r r 0x02 len_s s
-    der = sig
-    if der[0] != 0x30:
-        raise ValueError("Invalid DER signature")
-    idx = 2  # 跳过 0x30 和 length
-    if der[1] & 0x80:  # 长格式，但我们的长度固定 <128，所以直接跳过
-        idx += 1
-    if der[idx] != 0x02:
-        raise ValueError("Missing r integer")
-    len_r = der[idx + 1]
-    r_bytes = der[idx + 2:idx + 2 + len_r]
-    idx += 2 + len_r
-    if der[idx] != 0x02:
-        raise ValueError("Missing s integer")
-    len_s = der[idx + 1]
-    s_bytes = der[idx + 2:idx + 2 + len_s]
-    r = int.from_bytes(r_bytes, "big")
-    s = int.from_bytes(s_bytes, "big")
+    if sig and sig[0] == 0x30:
+        # DER 编码：0x30 len 0x02 len_r r 0x02 len_s s
+        idx = 2
+        if sig[1] & 0x80:  # 长格式长度
+            idx += 1
+        if sig[idx] != 0x02:
+            raise ValueError("Invalid DER signature: missing r")
+        len_r = sig[idx + 1]
+        r = int.from_bytes(sig[idx + 2:idx + 2 + len_r], "big")
+        idx += 2 + len_r
+        if sig[idx] != 0x02:
+            raise ValueError("Invalid DER signature: missing s")
+        len_s = sig[idx + 1]
+        s = int.from_bytes(sig[idx + 2:idx + 2 + len_s], "big")
+    elif len(sig) == 64:
+        # 裸 r||s
+        r = int.from_bytes(sig[:32], "big")
+        s = int.from_bytes(sig[32:], "big")
+    else:
+        raise ValueError(f"无法识别的签名格式（长度 {len(sig)}）")
 
-    # 低 s 归一化
+    # 低 s 归一化（部分服务端要求）
     if s > _N // 2:
         s = _N - s
 
-    # 重新 DER 编码
     der_new = _der_encode_signature(r, s)
     return base64.b64encode(der_new).decode("utf-8")
 
@@ -242,6 +246,33 @@ def _normalize_pem(raw: str, key_type="PRIVATE") -> str:
         return f"-----BEGIN PRIVATE KEY-----\n{s}\n-----END PRIVATE KEY-----"
     else:
         return f"-----BEGIN PUBLIC KEY-----\n{s}\n-----END PUBLIC KEY-----"
+
+def _repair_pem(raw: str, key_type="PRIVATE") -> str:
+    """读取侧修复：export_env 把 PEM 文本 base64 成单行写入 .env，这里先还原。
+
+    处理顺序：
+      1) 已是标准 PEM（含 -----BEGIN）-> 原样返回；
+      2) 尝试 base64 解码：解码后是 PEM 文本 -> 返回；解码后是裸 DER（base64）-> 补 PEM 头尾；
+      3) 都失败 -> 退回 _normalize_pem 的原行为（给出清晰报错点）。
+    """
+    s = (raw or "").strip()
+    if not s:
+        return ""
+    if "-----BEGIN" in s:
+        return s
+    try:
+        dec = base64.b64decode(s + "=" * (-len(s) % 4))
+        txt = dec.decode("utf-8")
+        if "-----BEGIN" in txt:
+            return txt
+        # 解码后是裸 DER 的 base64 主体
+        return _normalize_pem(txt, key_type)
+    except Exception:
+        pass
+    return _normalize_pem(s, key_type)
+
+def _repair_pem_key(raw: str, key: str) -> str:
+    return _repair_pem(raw, "PUBLIC" if key.endswith("pub_pem") else "PRIVATE")
 
 # ---- 续期核心 ----
 def build_device_proof(refresh_token: str, private_pem: str) -> dict:
@@ -493,8 +524,8 @@ def resolve_credentials():
         "device_id": os.environ.get("TRAE_DEVICE_ID", "").strip(),
         "user_id": os.environ.get("TRAE_USER_ID", "").strip(),
         "refresh_token": os.environ.get("TRAE_REFRESH_TOKEN", "").strip(),
-        "device_key_pem": _normalize_pem(os.environ.get("TRAE_DEVICE_KEY_PEM", ""), "PRIVATE"),
-        "device_pub_pem": _normalize_pem(os.environ.get("TRAE_DEVICE_PUB_PEM", ""), "PUBLIC"),
+        "device_key_pem": _repair_pem_key(os.environ.get("TRAE_DEVICE_KEY_PEM", ""), "device_key_pem"),
+        "device_pub_pem": _repair_pem_key(os.environ.get("TRAE_DEVICE_PUB_PEM", ""), "device_pub_pem"),
         "machine_id": os.environ.get("TRAE_MACHINE_ID", "").strip(),
         "expires_ms": 0,
         "refresh_expires_ms": 0,
@@ -505,7 +536,8 @@ def resolve_credentials():
                   "device_key_pem", "device_pub_pem", "machine_id",
                   "expires_ms", "refresh_expires_ms"):
             if cache.get(k):
-                cred[k] = cache[k]
+                # 缓存也可能是旧版 base64 编码值，统一走修复逻辑保证可导入
+                cred[k] = _repair_pem_key(cache[k], k) if k.endswith("_pem") else cache[k]
     return cred
 
 # ---- 精简后的错误判断 ----

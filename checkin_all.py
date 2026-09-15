@@ -101,16 +101,22 @@ def run_one(display_name, mod_name):
 
 def build_summary(results):
     now = datetime.now().strftime("%m-%d")
-    # 输出 Markdown：标题 + 每行加粗任务名，便于 server酱 按段渲染换行
+    # 输出 Markdown：标题 + 每个任务完整多行内容（含本次积分/连续签到/总剩余积分），
+    # 用引用块逐行缩进，避免只显示首行而丢失调度/余额等关键信息。
     lines = [f"## {now} Token签到汇总", ""]
     ok = 0
     for name, flag, content in results:
         icon = FLAG_ICON.get(flag, "•")
-        first_line = str(content).splitlines()[0] if str(content).strip() else "(空)"
-        lines.append(f"{icon} **{name}**：{first_line}")
+        lines.append(f"{icon} **{name}**：")
+        body = str(content).strip()
+        if body:
+            for ln in body.splitlines():
+                lines.append(f"> {ln}" if ln.strip() else "")
+        else:
+            lines.append("> (空)")
         if flag in ("SUCCESS", "ALREADY_TODAY"):
             ok += 1
-    lines.append("")
+        lines.append("")
     lines.append(f"**共 {len(results)} 项，成功/已签 {ok} 项**")
     return "\n".join(lines), ok, len(results)
 
@@ -154,8 +160,10 @@ def main():
     for display_name, mod_name, _title in TASKS:
         name, flag, content = run_one(display_name, mod_name)
         results.append((name, flag, content))
-        # 实时打印（仅首行，便于日志查看；完整内容见下方汇总）
-        print(f"\n[{name}] RESULT={flag} | {str(content).splitlines()[0]}")
+        # 实时打印完整内容（便于日志/排障查看，含本次积分与余额）
+        print(f"\n[{name}] RESULT={flag}")
+        body = str(content).strip()
+        print(body if body else "(空)")
 
     summary, ok, total = build_summary(results)
     print("\n" + "=" * 50)
