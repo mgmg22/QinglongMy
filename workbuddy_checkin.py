@@ -83,7 +83,14 @@ def _save_env_values(values: dict):
 
 API_BASE = "https://copilot.tencent.com"
 CHECKIN_PATH = "/v2/billing/meter/daily-checkin"
-STATUS_PATH = "/v2/billing/meter/checkin-status"
+# 用户资源包余额接口（与客户端『总剩余积分』同口径）。
+# 注意：该接口走无 /v2 前缀的新网关，且必须带 IDE 标识头，否则返回 10085 请求不合法。
+RESOURCE_SUMMARY_PATH = "/billing/meter/get-user-resource-summary"
+RESOURCE_HEADERS = {
+    "X-Product": "WorkBuddy",
+    "X-IDE-Name": "WorkBuddy",
+    "User-Agent": "WorkBuddy/5.3.8",
+}
 
 # 本地明文登录态候选路径（v5.3.8+ 桌面端写入）
 def _local_info_candidates():
@@ -154,13 +161,15 @@ def export_env():
     return 0
 
 
-def _call(token, uid, path):
+def _call(token, uid, path, extra_headers=None):
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
         "Authorization": f"Bearer {token}",
         "X-User-Id": uid,
     }
+    if extra_headers:
+        headers.update(extra_headers)
     try:
         r = requests.post(API_BASE + path, headers=headers, data="{}", timeout=15)
         try:
@@ -171,70 +180,60 @@ def _call(token, uid, path):
         return 0, {"error": str(e)}
 
 
-def _num(v):
-    """把可能是字符串/数字的剩余值安全地转 float，无法解析记 0。"""
+def _fmt_credits(v):
+    """余额按客户端口径展示：千分位 + 2 位小数（如 1,798.89）。"""
+    return f"{v:,.2f}"
+
+
+def _get_resource_packages(token, uid):
+    """查询用户资源包明细（与客户端『总剩余积分』同口径）。
+
+    返回 list[dict]（每条含 CycleRemainCapacity / CycleTotalCapacity 等），
+    失败 / 无数据 / 接口异常返回 None。"""
     try:
-        return float(v)
-    except (TypeError, ValueError):
-        return 0.0
-
-
-def _fmt(v):
-    """余额取整显示。"""
-    return str(int(round(v)))
-
-
-def _extract_total_credits(resp):
-    """从签到/活动状态响应里尽可能稳健地提取『总剩余积分』。
-
-    兼容多种字段命名（官方 /v2/billing/meter/checkin-activity-status 与
-    /checkin-status 可能用 total_credits / totalCredits / balance / remaining_credits）。
-    返回 float 或 None。"""
-    if not isinstance(resp, dict):
+        sc, sb = _call(token, uid, RESOURCE_SUMMARY_PATH, extra_headers=RESOURCE_HEADERS)
+    except Exception:
         return None
-    d = resp.get("data") if isinstance(resp.get("data"), dict) else resp
-    for key in ("total_credits", "totalCredits", "remaining_credits",
-                "remainingCredits", "balance", "credits"):
-        if key in d and d[key] is not None:
-            v = _num(d[key])
-            if v >= 0:
-                return v
-    return None
+    if not isinstance(sb, dict) or sb.get("code") != 0:
+        return None
+    data = sb.get("data") or {}
+    pkgs = data.get("Packages")
+    if not isinstance(pkgs, list):
+        return None
+    return pkgs
 
 
-def _get_total_credits(token, uid):
-    """读取『总剩余积分』（与 WorkBuddy 客户端展示口径一致）。
+def _sum_remaining_credits(pkgs):
+    """各资源包 CycleRemainCapacity 的正数之和 = 『总剩余积分』。
 
-    优先 /v2/billing/meter/checkin-activity-status，回退到 STATUS_PATH。
-    返回 float 或 None（无数据 / 接口异常）。"""
-    for path in ("/v2/billing/meter/checkin-activity-status", STATUS_PATH):
-        try:
-            sc, sb = _call(token, uid, path)
-        except Exception:
-            continue
-        if isinstance(sb, dict):
-            tc = _extract_total_credits(sb)
-            if tc is not None:
-                return tc
-    return None
+    对应客户端 sumSummaryCapacity 的 left（只累加 >0 的剩余）。返回 float 或 None。"""
+    if not isinstance(pkgs, list):
+        return None
+    try:
+        total = sum(max(0.0, float(p.get("CycleRemainCapacity", 0) or 0)) for p in pkgs)
+    except (TypeError, ValueError):
+        return None
+    return total
 
 
 def fetch_balance(token, uid, known_total=None):
     """查询总剩余积分并拼接文案。
 
-    『总剩余积分』始终以活动状态接口 /checkin-activity-status 为准——
-    实测 /checkin-status 的 total_credits 经常为 0（不代表真实余额），而活动状态接口
-    返回的是真实剩余（如 1500）。known_total 仅作为查询异常时的兜底。
-    任何异常 / 无数据返回空串，不影响主流程。"""
+    口径以 /billing/meter/get-user-resource-summary 为准——该接口返回的资源包
+    CycleRemainCapacity 之和，即客户端『总剩余积分』（含套餐基础 / 平台奖励 / 加量包等全部）。
+    旧的 checkin-activity-status 的 total_credits 只是当期签到活动积分（如 1500），
+    并非真实余额，不能当作『总剩余积分』。
+    查询异常 / 无数据时返回空串，避免展示错误数字（不再回退到活动积分）。
+    """
     try:
-        total = _get_total_credits(token, uid)
+        pkgs = _get_resource_packages(token, uid)
     except Exception:
-        total = None
-    if total is None:
-        total = known_total
-    if total is None:
-        return ""
-    return f"- 总剩余积分：{_fmt(total)}"
+        pkgs = None
+    if pkgs is not None:
+        total = _sum_remaining_credits(pkgs)
+        if total is not None:
+            return f"- 总剩余积分：{_fmt_credits(total)}"
+    return ""
 
 
 def checkin_once(cred):
@@ -246,12 +245,6 @@ def checkin_once(cred):
     if not token or not uid:
         return "NO_CREDENTIAL", ("未获取到 WorkBuddy 登录态，请设置环境变量 WB_ACCESS_TOKEN / WB_USER_ID"
                                  "（或运行 python workbuddy_checkin.py --export-env --save 刷新）")
-
-    # 查询状态（仅参考，today_checked_in 不可靠）；同时取总剩余积分供余额展示
-    sc, sb = _call(token, uid, STATUS_PATH)
-    status_total = None
-    if isinstance(sb, dict):
-        status_total = (sb.get("data") or {}).get("total_credits")
 
     # 执行领取（幂等：code=10001 表示今日已签）
     cc, cb = _call(token, uid, CHECKIN_PATH)
@@ -265,13 +258,13 @@ def checkin_once(cred):
             d = cb.get("data", {})
             content = (f"✅ 领取成功\n- 本次积分：{d.get('credit')}\n"
                        f"- 连续签到：第 {d.get('streak_days')} 天")
-            bal = fetch_balance(token, uid, known_total=status_total)
+            bal = fetch_balance(token, uid)
             if bal:
                 content += f"\n{bal}"
             return "SUCCESS", content
         if code == 10001:
             content = "ℹ️ 今日已签到，无需重复领取"
-            bal = fetch_balance(token, uid, known_total=status_total)
+            bal = fetch_balance(token, uid)
             if bal:
                 content += f"\n{bal}"
             return "ALREADY_TODAY", content
