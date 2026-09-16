@@ -604,7 +604,10 @@ def query_points(host, token, device_id):
     sc, sb = api_call(host, token, device_id, ENTITLEMENT_PATH,
                       body={"require_usage": True}, timeout=15)
     try:
-        packs = (((sb or {}).get("data") or {}).get("user_entitlement_pack_list")) or []
+        raw = (sb or {})
+        packs = (raw.get("user_entitlement_pack_list")
+                 or ((raw.get("data") or {}).get("user_entitlement_pack_list"))
+                 or [])
         total = 0
         found = False
         for p in packs:
