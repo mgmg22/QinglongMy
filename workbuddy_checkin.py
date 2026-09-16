@@ -31,6 +31,14 @@ token 过期时，在本机（已登录 WorkBuddy 桌面端 v5.3.8+）执行：
     字段： WB_ACCESS_TOKEN = auth.accessToken ， WB_USER_ID = account.uid
 
 优先级（仅 --export-env 路径）：本机明文登录态 > 其它。
+
+==============================================================================
+成长中心（派猫旅行 / 开盲盒）：
+    每次运行都会在签到后顺带执行成长中心可 API 化部分（派猫旅行往返、开盲盒），
+    不会自动完成成长计划任务本体，也不会去领任务奖励。无独立子命令，固定一起跑：
+        python workbuddy_checkin.py            # 签到 + 成长中心
+    若成长中心接口需要按产品路由，可设置环境变量 WB_DOMAIN（取自本机登录态
+    auth.domain，如 www.workbuddy.cn）；留空通常亦可命中默认产品。
 ==============================================================================
 """
 
@@ -91,6 +99,40 @@ RESOURCE_HEADERS = {
     "X-IDE-Name": "WorkBuddy",
     "User-Agent": "WorkBuddy/5.3.8",
 }
+
+# ---------------------------------------------------------------------------
+# 成长中心（派猫旅行 + 开盲盒）——仅做可 API 化的部分，不自动完成成长计划任务
+# 接口基准：{API_BASE}/v2/activity/growth
+# 端点参考已验证实现：gitee.com/SJAY/workbuddy-trae-auto-signin（copilot.tencent.com + Bearer）
+# ---------------------------------------------------------------------------
+GROWTH_BASE = "/v2/activity/growth"
+TRAVEL_STATUS = GROWTH_BASE + "/buddy/travel/status"
+TRAVEL_CONFIG = GROWTH_BASE + "/buddy/travel/config"
+TRAVEL_DEPART = GROWTH_BASE + "/buddy/travel/depart"
+TRAVEL_CLAIM = GROWTH_BASE + "/buddy/travel/claim"
+LOTTERY_CHANCES = GROWTH_BASE + "/lottery/chances"
+LOTTERY_DRAW = GROWTH_BASE + "/lottery/draw"
+ENERGY = GROWTH_BASE + "/energy"
+# 开盲盒每次固定消耗的能量值（官方规则：每攒够 10 点能量可开启一次盲盒）
+BLINDBOX_ENERGY_COST = 10
+
+
+def _unwrap(body):
+    """剥掉 data 信封：{code, data:{...}} -> {...}；非信封原样返回。"""
+    if isinstance(body, dict):
+        d = body.get("data")
+        if isinstance(d, dict):
+            return d
+    return body
+
+
+def _ok(sc, sb):
+    """HTTP 2xx 且业务 code 非错误（缺失/0 视为成功）。"""
+    if not (200 <= sc < 300):
+        return False
+    if isinstance(sb, dict) and sb.get("code") not in (None, 0):
+        return False
+    return True
 
 # 本地明文登录态候选路径（v5.3.8+ 桌面端写入）
 def _local_info_candidates():
@@ -161,17 +203,26 @@ def export_env():
     return 0
 
 
-def _call(token, uid, path, extra_headers=None):
+def _call(token, uid, path, extra_headers=None, payload=None, method="POST"):
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
         "Authorization": f"Bearer {token}",
         "X-User-Id": uid,
     }
+    # 成长中心接口可能按 X-Domain 路由到对应产品（取自本机登录态 auth.domain）。
+    # 仅当显式设置 WB_DOMAIN 时附加，不强制；留空通常仍可命中默认产品。
+    domain = (os.environ.get("WB_DOMAIN", "") or "").strip()
+    if domain:
+        headers["X-Domain"] = domain
     if extra_headers:
         headers.update(extra_headers)
+    body = json.dumps(payload) if payload is not None else "{}"
     try:
-        r = requests.post(API_BASE + path, headers=headers, data="{}", timeout=15)
+        if method and method.upper() == "GET":
+            r = requests.get(API_BASE + path, headers=headers, timeout=15)
+        else:
+            r = requests.post(API_BASE + path, headers=headers, data=body, timeout=15)
         try:
             return r.status_code, r.json()
         except Exception:
@@ -274,13 +325,102 @@ def checkin_once(cred):
     return "HTTP_ERR", f"⚠️ 请求异常（HTTP {cc}）：{json.dumps(cb, ensure_ascii=False)[:200]}"
 
 
+def buddy_travel(token, uid):
+    """派猫旅行状态机：arrived→领奖；idle→派出发；traveling→跳过。
+    返回 (人话汇报, 数据) 元组。动作由服务端状态驱动，天然幂等，重复运行不会重复领/派。"""
+    sc, sb = _call(token, uid, TRAVEL_STATUS, method="GET")
+    if not _ok(sc, sb):
+        return f"查询旅行状态失败（HTTP {sc}）", None
+    data = _unwrap(sb)
+    state = data.get("state")
+    parts = []
+
+    if state == "arrived":
+        record_id = data.get("record_id")
+        cc, cb = _call(token, uid, TRAVEL_CLAIM, payload={"record_id": record_id})
+        if _ok(cc, cb):
+            reward = _unwrap(cb).get("reward_credit")
+            parts.append(f"领旅行礼物 +{reward} 积分" if reward is not None else "领旅行礼物成功")
+        else:
+            parts.append(f"领旅行礼物失败（HTTP {cc}）")
+        state = "idle"  # 领完回到 idle，下方再派一程
+
+    if state == "idle":
+        # 服务端标记今日派猫额度已用完时，depart 会返回 400 daily limit reached，属正常幂等态
+        if data.get("daily_limit_reached"):
+            parts.append("今日派猫额度已用完（明日可再派）")
+        else:
+            cc, cb = _call(token, uid, TRAVEL_CONFIG, method="GET")
+            locs = _unwrap(cb).get("locations") if _ok(cc, cb) else None
+            if isinstance(locs, list) and locs:
+                loc = locs[0]
+                dc, db = _call(token, uid, TRAVEL_DEPART, payload={"location_id": loc.get("id")})
+                if _ok(dc, db):
+                    loc_name = (_unwrap(db).get("location") or {}).get("name", "?")
+                    parts.append(f"派 Buddy 去{loc_name}")
+                else:
+                    parts.append(f"派 Buddy 失败（HTTP {dc}）")
+            else:
+                parts.append("无可用旅行地点")
+    elif state == "traveling":
+        loc_name = (data.get("location") or {}).get("name", "?")
+        parts.append(f"Buddy 旅行中（{loc_name}）")
+
+    return ("；".join(parts) if parts else "旅行无变动"), data
+
+
+def open_blindbox(token, uid):
+    """开盲盒：查询可抽次数（lottery/chances），能量足够（>=10）则抽一次。
+    盲盒每次消耗 10 点能量，属于成长中心可 API 化部分，与『完成成长计划任务』无关。
+    返回 (人话汇报, 剩余机会) 元组。能量不足或机会为 0 时不抽，避免无谓报错。"""
+    sc, sb = _call(token, uid, LOTTERY_CHANCES, method="GET")
+    if not _ok(sc, sb):
+        return f"查询盲盒机会失败（HTTP {sc}）", None
+    chances = _unwrap(sb).get("balance")
+    if not isinstance(chances, int) or chances <= 0:
+        return "暂无可开盲盒机会", chances
+    # 开盲盒每次固定消耗 10 点能量；能量不足时接口返回 400 invalid request，属前端约束
+    es, eb = _call(token, uid, ENERGY, method="GET")
+    energy = _unwrap(eb).get("balance") if _ok(es, eb) else None
+    if isinstance(energy, int) and energy < BLINDBOX_ENERGY_COST:
+        return f"能量不足（当前{energy}/{BLINDBOX_ENERGY_COST}），暂不能开盲盒", chances
+    dc, db = _call(token, uid, LOTTERY_DRAW, payload={})
+    if _ok(dc, db):
+        prize = _unwrap(db).get("prize_name") or _unwrap(db).get("prize") or "未知奖励"
+        return f"开盲盒获得：{prize}", max(0, chances - 1)
+    return f"开盲盒失败（HTTP {dc}，能量{energy}）", chances
+
+
+def run_growth(token, uid):
+    """成长中心编排：派猫旅行 + 开盲盒。不含任务领奖（避免自动刷满成长计划）。"""
+    if not token or not uid:
+        return "未配置 WB_ACCESS_TOKEN / WB_USER_ID，跳过成长中心"
+    parts = []
+    t, _ = buddy_travel(token, uid)
+    if t:
+        parts.append("派猫：" + t)
+    b, _ = open_blindbox(token, uid)
+    if b:
+        parts.append("盲盒：" + b)
+    return "；".join(parts) if parts else "成长中心无可执行项"
+
+
 def main():
     if "--export-env" in sys.argv:
         sys.exit(export_env())
 
+    # 每次默认：每日签到 + 成长中心（派猫旅行 / 开盲盒）一起跑
     cred = resolve_credentials()
+    token, uid = cred["token"], cred["uid"]
+
     flag, content = checkin_once(cred)
     print(f"RESULT={flag} | {content}")
+
+    if token and uid:
+        gr = run_growth(token, uid)
+        print(f"GROWTH | {gr}")
+        content = content + "\n" + gr
+
     sendNotify.serverJMy("WorkBuddy 每日签到", content)
 
 
