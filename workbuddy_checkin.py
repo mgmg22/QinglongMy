@@ -46,6 +46,7 @@ import os
 import re
 import sys
 import json
+import time
 import platform
 import requests
 import sendNotify
@@ -112,6 +113,14 @@ TRAVEL_DEPART = GROWTH_BASE + "/buddy/travel/depart"
 TRAVEL_CLAIM = GROWTH_BASE + "/buddy/travel/claim"
 LOTTERY_CHANCES = GROWTH_BASE + "/lottery/chances"
 LOTTERY_DRAW = GROWTH_BASE + "/lottery/draw"
+
+# ---------------------------------------------------------------------------
+# 基础对话：每次签到触发一次最基础真实对话（不读取/不修改任何成长计划任务）
+# 端点与签到同域名同鉴权；模型固定 deepseek-v4.1-flash；必须 stream:true（SSE）
+# 仅用于发起一次真实对话，与成长计划任务本体无关
+# ---------------------------------------------------------------------------
+CHAT_PATH = "/v2/chat/completions"
+CHAT_MODEL = "deepseek-v4.1-flash"
 ENERGY = GROWTH_BASE + "/energy"
 # 开盲盒每次固定消耗的能量值（官方规则：每攒够 10 点能量可开启一次盲盒）
 BLINDBOX_ENERGY_COST = 10
@@ -405,6 +414,67 @@ def run_growth(token, uid):
     return "；".join(parts) if parts else "成长中心无可执行项"
 
 
+def _parse_sse_content(raw):
+    """从 SSE 原始响应中拼接所有 delta.content（遇 [DONE] 即止）。"""
+    out = []
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line.startswith("data:"):
+            continue
+        payload = line[5:].strip()
+        if payload == "[DONE]":
+            break
+        try:
+            obj = json.loads(payload)
+        except Exception:
+            continue
+        if isinstance(obj, dict):
+            choices = obj.get("choices") or []
+            if choices:
+                c = (choices[0].get("delta") or {}).get("content")
+                if c:
+                    out.append(c)
+    return "".join(out)
+
+
+def chat_once(token, uid, prompt=None):
+    """发起一次最基础的真实对话（固定模型 deepseek-v4.1-flash，SSE 流式）。
+    目的仅为发起一句话真实对话，不读取/不修改任何成长计划任务。
+    prompt 为空时回退到默认一句无害问候；可用环境变量 WB_CHAT_PROMPT 覆盖。
+    返回 (人话汇报, 回复文本)。"""
+    if prompt is None:
+        prompt = (os.environ.get("WB_CHAT_PROMPT", "") or "").strip()
+    if not prompt:
+        prompt = "你好，这是每日签到脚本触发的一次基础对话。"
+    # WorkBuddy 后端即标准 OpenAI chat/completions 协议，真实客户端（及多个开源
+    # 逆向代理 codebuddy2openai / workbuddy-cliproxy）实测请求体仅含以下字段；
+    # 用法记录里的「时间」「使用端」是服务端展示列，并非请求体字段，无需发送。
+    body = {
+        "model": CHAT_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "stream": True,
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream",
+        "Authorization": f"Bearer {token}",
+        "X-User-Id": uid,
+        "User-Agent": "WorkBuddy/5.3.8",
+    }
+    try:
+        r = requests.post(API_BASE + CHAT_PATH, headers=headers,
+                          data=json.dumps(body), stream=True, timeout=60)
+        if r.status_code != 200:
+            return f"对话请求失败（HTTP {r.status_code}）：{r.text[:120]}", None
+        text = _parse_sse_content(r.content.decode("utf-8", "replace"))
+        if not text:
+            return "对话已发送，但未解析到回复内容", None
+        preview = text[:80] + ("…" if len(text) > 80 else "")
+        return f"已发起对话，模型回复：{preview}", text
+    except Exception as e:
+        return f"对话请求异常：{str(e)[:160]}", None
+
+
 def main():
     if "--export-env" in sys.argv:
         sys.exit(export_env())
@@ -417,6 +487,10 @@ def main():
     print(f"RESULT={flag} | {content}")
 
     if token and uid:
+        ch, _ = chat_once(token, uid)
+        print(f"CHAT | {ch}")
+        content = content + "\n" + ch
+
         gr = run_growth(token, uid)
         print(f"GROWTH | {gr}")
         content = content + "\n" + gr
