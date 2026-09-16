@@ -74,8 +74,6 @@ export API_URL=
 # token 过期时，在本机（已登录 WorkBuddy 桌面端 v5.3.8+）执行：python workbuddy_checkin.py --export-env --save 即可刷新
 export WB_ACCESS_TOKEN=
 export WB_USER_ID=
-# 可选：覆盖每次签到触发的基础对话内容（留空默认发「你好」）
-export WB_CHAT_PROMPT=
 
 ## Trae Work 每日签到（trae_checkin.py）
 # 脚本【默认只读取以下环境变量】，不自动解密本机登录态

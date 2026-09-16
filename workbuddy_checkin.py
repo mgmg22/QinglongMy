@@ -439,13 +439,11 @@ def _parse_sse_content(raw):
 
 def chat_once(token, uid, prompt=None):
     """发起一次最基础的真实对话（固定模型 deepseek-v4.1-flash，SSE 流式）。
-    目的仅为发起一句话真实对话，不读取/不修改任何成长计划任务。
-    prompt 为空时回退到默认一句无害问候；可用环境变量 WB_CHAT_PROMPT 覆盖。
+    目的仅为发起一句话真实对话。
     返回 (人话汇报, 回复文本)。"""
-    if prompt is None:
-        prompt = (os.environ.get("WB_CHAT_PROMPT", "") or "").strip()
-    if not prompt:
+    if prompt is None or not str(prompt).strip():
         prompt = "你好"
+    prompt = str(prompt).strip()
     # WorkBuddy 后端即标准 OpenAI chat/completions 协议，真实客户端（及多个开源
     # 逆向代理 codebuddy2openai / workbuddy-cliproxy）实测请求体仅含以下字段；
     # 用法记录里的「时间」「使用端」是服务端展示列，并非请求体字段，无需发送。
