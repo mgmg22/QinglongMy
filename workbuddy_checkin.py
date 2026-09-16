@@ -445,7 +445,7 @@ def chat_once(token, uid, prompt=None):
     if prompt is None:
         prompt = (os.environ.get("WB_CHAT_PROMPT", "") or "").strip()
     if not prompt:
-        prompt = "你好，这是每日签到脚本触发的一次基础对话。"
+        prompt = "你好"
     # WorkBuddy 后端即标准 OpenAI chat/completions 协议，真实客户端（及多个开源
     # 逆向代理 codebuddy2openai / workbuddy-cliproxy）实测请求体仅含以下字段；
     # 用法记录里的「时间」「使用端」是服务端展示列，并非请求体字段，无需发送。
