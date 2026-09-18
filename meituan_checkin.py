@@ -265,7 +265,8 @@ def _run_passport(args, timeout=600):
     try:
         p = subprocess.run(
             [NODE_BIN, PT_PASSPORT_JS] + list(args),
-            capture_output=True, text=True, timeout=timeout, env=env,
+            capture_output=True, encoding="utf-8", errors="replace",
+            timeout=timeout, env=env,
         )
         return (p.returncode, (p.stdout or "").strip())
     except Exception as e:  # noqa
@@ -286,13 +287,39 @@ def _qr_image_url(url):
         return None
 
 
+def _clear_cached_token(cid, env="prod"):
+    """强制重新扫码前，清除本 client 的本地登录态，使 get-code 返回 AUTH_LINK 而非缓存 token。
+    否则 get-code 会直接吐出缓存里的旧 token（即便已过期），导致二维码分支被短路、无法真正重新认证。"""
+    if not os.path.exists(PT_PASSPORT_AUTH):
+        return
+    key = cid + "@" + ("test" if env == "test" else "prod")
+    try:
+        with open(PT_PASSPORT_AUTH, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except Exception:
+        return
+    if key in data:
+        del data[key]
+        try:
+            if data:
+                with open(PT_PASSPORT_AUTH, "w", encoding="utf-8") as fh:
+                    json.dump(data, fh, ensure_ascii=False, indent=2)
+            else:
+                os.remove(PT_PASSPORT_AUTH)
+        except Exception:
+            pass
+
+
 def login_flow(env="prod", max_wait=300):
     """重新扫码登录（Python 端）：get-code -> 展示二维码 -> poll-token 阻塞等待，直到拿到 Token。
     成功后会写入 pt_passport_auth.json（与插件共用同一份登录态），并返回凭据 dict；
     失败（如超时未扫码）返回 None。"""
     cid = _clean(os.environ.get("MT_CLIENT_ID") or DEFAULT_CLIENT_ID)
     env_flag = ["--env", env] if env == "test" else []
-    print("▶ 正在生成美团登录二维码 ...")
+    # 强制重新扫码：先清除本 client 的本地登录态，否则 get-code 会直接吐出
+    # 缓存里的旧 token（即便已过期），导致二维码分支被短路、无法真正重新认证。
+    print("▶ 正在清除本地旧登录态，准备生成新的美团登录二维码 ...")
+    _clear_cached_token(cid, env)
     code, out = _run_passport(["auth", "get-code", "--client_id", cid] + env_flag)
     token = None
     m = re.search(r"Token:\s*(\S+)", out)
