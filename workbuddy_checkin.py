@@ -467,8 +467,7 @@ def chat_once(token, uid, prompt=None):
         text = _parse_sse_content(r.content.decode("utf-8", "replace"))
         if not text:
             return "对话已发送，但未解析到回复内容", None
-        preview = text[:80] + ("…" if len(text) > 80 else "")
-        return f"已发起对话，模型回复：{preview}", text
+        return "已发起对话", text
     except Exception as e:
         return f"对话请求异常：{str(e)[:160]}", None
 
