@@ -36,7 +36,7 @@ token 过期时，在本机（已登录 WorkBuddy 桌面端 v5.3.8+）执行：
 成长中心（派猫旅行 / 开盲盒）：
     每次运行都会在签到后顺带执行成长中心可 API 化部分（派猫旅行往返、开盲盒），
     不会自动完成成长计划任务本体，也不会去领任务奖励。无独立子命令，固定一起跑：
-        python workbuddy_checkin.py            # 签到 + 成长中心
+        python workbuddy_checkin.py            # 签到 + 基础对话 + 成长中心
     若成长中心接口需要按产品路由，可设置环境变量 WB_DOMAIN（取自本机登录态
     auth.domain，如 www.workbuddy.cn）；留空通常亦可命中默认产品。
 ==============================================================================
@@ -46,7 +46,6 @@ import os
 import re
 import sys
 import json
-import time
 import platform
 import requests
 import sendNotify
@@ -439,8 +438,9 @@ def _parse_sse_content(raw):
 
 def chat_once(token, uid, prompt=None):
     """发起一次最基础的真实对话（固定模型 deepseek-v4.1-flash，SSE 流式）。
-    目的仅为发起一句话真实对话。
-    返回 (人话汇报, 回复文本)。"""
+    目的仅为发起一句话真实对话，不读取/不修改任何成长计划任务。
+    默认发送「你好」，回执固定为「已发起对话」（不含模型回复内容）。
+    返回 (状态汇报, 回复文本)。"""
     if prompt is None or not str(prompt).strip():
         prompt = "你好"
     prompt = str(prompt).strip()
