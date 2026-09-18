@@ -15,7 +15,8 @@ new Env('每日Token签到汇总');
     - MiniMax Code 每日签到 (minimax_checkin.py)
 
 设计要点：
-    - 子脚本均已提供 checkin_once(cred) -> (flag, content)，本脚本直接调用并
+    - 子脚本优先提供 run_full(cred) -> (flag, content)（签到+对话+成长中心等
+      全量流程），缺失时回落 checkin_once(cred)（仅签到）；本脚本直接调用并
       收集结果，不触发子脚本自身的推送（最终合并推送由本脚本统一发出）。
     - 子脚本在【导入阶段】失败（如依赖缺失会 sys.exit）时，仅跳过该脚本并在
       汇总中标注，不中断其余脚本。
@@ -92,7 +93,11 @@ def run_one(display_name, mod_name):
         return display_name, "IMPORT_FAIL", f"⚠️ 模块导入失败，已跳过：{err}{hint}"
     try:
         cred = mod.resolve_credentials()
-        flag, content = mod.checkin_once(cred)
+        # 优先调用子脚本的 run_full（签到+对话+成长中心等全量流程），
+        # 若不存在则回落 checkin_once（仅签到）。保证 WorkBuddy 在聚合场景
+        # 下也执行派猫/盲盒/对话，与单独运行一致。
+        runner = getattr(mod, "run_full", None) or mod.checkin_once
+        flag, content = runner(cred)
         return display_name, flag, content
     except BaseException as e:
         return display_name, "ERROR", \

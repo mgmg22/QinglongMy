@@ -473,26 +473,29 @@ def chat_once(token, uid, prompt=None):
         return f"对话请求异常：{str(e)[:160]}", None
 
 
+def run_full(cred):
+    """完整运行：每日签到 + 基础真实对话 + 成长中心（派猫旅行 / 开盲盒）。
+    返回 (flag, content)，content 为三部分合并文本。供单独运行与 checkin_all
+    聚合脚本共用，确保无论哪种入口都执行同样的全量流程（含派猫/盲盒/对话）。
+    对话与成长中心仅在凭据齐全时执行；任一部分失败不影响其余部分如实汇总。"""
+    cred = cred or {}
+    token, uid = cred.get("token", ""), cred.get("uid", "")
+    flag, content = checkin_once(cred)
+    if token and uid:
+        ch, _ = chat_once(token, uid)
+        content = content + "\n" + ch
+        gr = run_growth(token, uid)
+        content = content + "\n" + gr
+    return flag, content
+
+
 def main():
     if "--export-env" in sys.argv:
         sys.exit(export_env())
 
-    # 每次默认：每日签到 + 成长中心（派猫旅行 / 开盲盒）一起跑
     cred = resolve_credentials()
-    token, uid = cred["token"], cred["uid"]
-
-    flag, content = checkin_once(cred)
+    flag, content = run_full(cred)
     print(f"RESULT={flag} | {content}")
-
-    if token and uid:
-        ch, _ = chat_once(token, uid)
-        print(f"CHAT | {ch}")
-        content = content + "\n" + ch
-
-        gr = run_growth(token, uid)
-        print(f"GROWTH | {gr}")
-        content = content + "\n" + gr
-
     sendNotify.serverJMy("WorkBuddy 每日签到", content)
 
 
