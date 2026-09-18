@@ -20,8 +20,10 @@
       与插件 config.json 的 aiScene；部署到青龙 / 容器时请直接设置环境变量。
     - 美团 token 由 pt-passport 扫码登录获得（无自动续期）。本脚本内置
       `login` 命令，可用 Python 端直接触发重新扫码（底层仍调用同款 pt-passport 的
-      Node 实现，二维码展示/轮询/写 env 均为 Python），无需切回 Node run.js：
-        python meituan_checkin.py login            # 交互扫码，打印 MT_TOKEN 等
+      Node 实现，二维码展示/轮询/写 env 均为 Python），无需切回 Node run.js。
+      `login` 每次都会先清除本机旧登录态、强制弹出新的二维码（忽略缓存、
+      扫码后覆盖写回），避免误用已过期 token：
+        python meituan_checkin.py login            # 强制重新扫码，打印 MT_TOKEN 等
         python meituan_checkin.py login --save     # 扫码后写回同目录 .env
         python meituan_checkin.py --export-env --login --save
                                                      # 无缓存时先扫码再导出并保存
@@ -30,7 +32,7 @@
 
 用法小结：
     python meituan_checkin.py                 # 领券（默认）
-    python meituan_checkin.py login [--save] # Python 端重新扫码
+    python meituan_checkin.py login [--save] # Python 端强制重新扫码（忽略旧缓存）
     python meituan_checkin.py --export-env [--login] [--save]
 =====================================================
 """
@@ -274,7 +276,7 @@ def _run_passport(args, timeout=600):
 
 
 def _qr_image_url(url):
-    """调用美团服务端接口换取可扫描的二维码图片 URL（对应 run.js qrcode 命令）。"""
+    """调用美团服务端接口换取可扫描的二维码图片 URL。"""
     api = "https://click.meituan.com/cps/ai/product/getQrCodeImage"
     body = json.dumps({"originalUrl": url, "clientSource": "coupon-fusion-workbuddy"}).encode("utf-8")
     req = urllib.request.Request(api, data=body, method="POST")
@@ -351,7 +353,7 @@ def login_flow(env="prod", max_wait=300):
         if tm:
             token = tm.group(1).strip()
         # 兜底：poll 失败（后端竞态：用户已扫码成功但 poll 会话已关闭）时，
-        # 再 get-code 确认是否已拿到 token（与 run.js 行为一致）
+        # 再 get-code 确认是否已拿到 token（与原有扫码流程行为一致）
         if not token and (code != 0 or "❌" in (out or "")):
             fc, fout = _run_passport(["auth", "get-code", "--client_id", cid] + env_flag)
             fm = re.search(r"Token:\s*(\S+)", fout or "")
