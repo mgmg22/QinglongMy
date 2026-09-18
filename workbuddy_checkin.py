@@ -357,7 +357,7 @@ def buddy_travel(token, uid):
     if state == "idle":
         # 服务端标记今日派猫额度已用完时，depart 会返回 400 daily limit reached，属正常幂等态
         if data.get("daily_limit_reached"):
-            parts.append("今日派猫额度已用完（明日可再派）")
+            parts.append("今日派猫额度已用完")
         else:
             cc, cb = _call(token, uid, TRAVEL_CONFIG, method="GET")
             locs = _unwrap(cb).get("locations") if _ok(cc, cb) else None
@@ -392,7 +392,7 @@ def open_blindbox(token, uid):
     es, eb = _call(token, uid, ENERGY, method="GET")
     energy = _unwrap(eb).get("balance") if _ok(es, eb) else None
     if isinstance(energy, int) and energy < BLINDBOX_ENERGY_COST:
-        return f"能量不足（当前{energy}/{BLINDBOX_ENERGY_COST}），暂不能开盲盒", chances
+        return f"能量不足（当前{energy}/{BLINDBOX_ENERGY_COST}）", chances
     dc, db = _call(token, uid, LOTTERY_DRAW, payload={})
     if _ok(dc, db):
         prize = _unwrap(db).get("prize_name") or _unwrap(db).get("prize") or "未知奖励"
@@ -407,7 +407,7 @@ def run_growth(token, uid):
     parts = []
     t, _ = buddy_travel(token, uid)
     if t:
-        parts.append("派猫：" + t)
+        parts.append(t)
     b, _ = open_blindbox(token, uid)
     if b:
         parts.append("盲盒：" + b)
