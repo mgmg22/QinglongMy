@@ -33,6 +33,13 @@ token 过期时，在本机（已登录 WorkBuddy 桌面端 v5.3.8+）执行：
 优先级（仅 --export-env 路径）：本机明文登录态 > 其它。
 
 ==============================================================================
+基础对话（chat_once）：
+    每次签到一起触发一条最基础的真实对话（固定模型 deepseek-v4.1-flash，
+    POST /v2/chat/completions，SSE 流式）。请求会额外携带产品标识头：
+        X-Product / X-IDE-Name / X-IDE-Type / X-IDE-Version / X-Product-Version / X-Domain
+    不带这套头时，服务端不把该请求归属到客户端，控制台「积分消耗明细」的
+    「使用端」列会显示「-」（认不出来）；带上后即显示 WorkBuddy。
+==============================================================================
 成长中心（派猫旅行 / 开盲盒）：
     每次运行都会在签到后顺带执行成长中心可 API 化部分（派猫旅行往返、开盲盒），
     不会自动完成成长计划任务本体，也不会去领任务奖励。无独立子命令，固定一起跑：
@@ -120,6 +127,8 @@ LOTTERY_DRAW = GROWTH_BASE + "/lottery/draw"
 # ---------------------------------------------------------------------------
 CHAT_PATH = "/v2/chat/completions"
 CHAT_MODEL = "deepseek-v4.1-flash"
+# 客户端版本：与登录态 auth 客户端版本保持一致，用于标识控制台「使用端」列
+CHAT_CLIENT_VERSION = "5.3.8"
 ENERGY = GROWTH_BASE + "/energy"
 # 开盲盒每次固定消耗的能量值（官方规则：每攒够 10 点能量可开启一次盲盒）
 BLINDBOX_ENERGY_COST = 10
@@ -444,9 +453,8 @@ def chat_once(token, uid, prompt=None):
     if prompt is None or not str(prompt).strip():
         prompt = "你好"
     prompt = str(prompt).strip()
-    # WorkBuddy 后端即标准 OpenAI chat/completions 协议，真实客户端（及多个开源
-    # 逆向代理 codebuddy2openai / workbuddy-cliproxy）实测请求体仅含以下字段；
-    # 用法记录里的「时间」「使用端」是服务端展示列，并非请求体字段，无需发送。
+    # 请求体只含标准 OpenAI 字段；控制台「使用端」列由下列产品标识头决定，
+    # 缺失时该列显示「-」，带上后显示 WorkBuddy（详见顶部说明）。
     body = {
         "model": CHAT_MODEL,
         "messages": [{"role": "user", "content": prompt}],
@@ -457,7 +465,13 @@ def chat_once(token, uid, prompt=None):
         "Accept": "text/event-stream",
         "Authorization": f"Bearer {token}",
         "X-User-Id": uid,
-        "User-Agent": "WorkBuddy/5.3.8",
+        "X-Product": "WorkBuddy",
+        "X-IDE-Name": "WorkBuddy",
+        "X-IDE-Type": "WorkBuddy",
+        "X-IDE-Version": CHAT_CLIENT_VERSION,
+        "X-Product-Version": CHAT_CLIENT_VERSION,
+        "X-Domain": "www.workbuddy.cn",
+        "User-Agent": f"WorkBuddyIDE/{CHAT_CLIENT_VERSION} WorkBuddy/{CHAT_CLIENT_VERSION}",
     }
     try:
         r = requests.post(API_BASE + CHAT_PATH, headers=headers,
