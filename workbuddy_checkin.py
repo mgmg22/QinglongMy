@@ -53,6 +53,7 @@ import os
 import re
 import sys
 import json
+import uuid
 import platform
 import requests
 import sendNotify
@@ -110,7 +111,6 @@ RESOURCE_HEADERS = {
 # ---------------------------------------------------------------------------
 # 成长中心（派猫旅行 + 开盲盒）——仅做可 API 化的部分，不自动完成成长计划任务
 # 接口基准：{API_BASE}/v2/activity/growth
-# 端点参考已验证实现：gitee.com/SJAY/workbuddy-trae-auto-signin（copilot.tencent.com + Bearer）
 # ---------------------------------------------------------------------------
 GROWTH_BASE = "/v2/activity/growth"
 TRAVEL_STATUS = GROWTH_BASE + "/buddy/travel/status"
@@ -129,9 +129,6 @@ CHAT_PATH = "/v2/chat/completions"
 CHAT_MODEL = "deepseek-v4.1-flash"
 # 客户端版本：与登录态 auth 客户端版本保持一致，用于标识控制台「使用端」列
 CHAT_CLIENT_VERSION = "5.3.8"
-ENERGY = GROWTH_BASE + "/energy"
-# 开盲盒每次固定消耗的能量值（官方规则：每攒够 10 点能量可开启一次盲盒）
-BLINDBOX_ENERGY_COST = 10
 
 
 def _unwrap(body):
@@ -284,7 +281,7 @@ def _sum_remaining_credits(pkgs):
     return total
 
 
-def fetch_balance(token, uid, known_total=None):
+def fetch_balance(token, uid):
     """查询总剩余积分并拼接文案。
 
     口径以 /billing/meter/get-user-resource-summary 为准——该接口返回的资源包
@@ -386,26 +383,35 @@ def buddy_travel(token, uid):
     return ("；".join(parts) if parts else "旅行无变动"), data
 
 
+def _client_token(prefix="u"):
+    """活动类写接口（开盲盒抽奖 lottery/draw 等）要求的防重放 token。
+
+    官方前端用 crypto.randomUUID() 拼成 "u-<uuid>"，服务端仅做幂等去重、不校验格式；
+    缺了它 /lottery/draw 直接 400 invalid request（实测）。来源：github.com/88lin/
+    workbuddy-auto-signin 逆向所得。"""
+    return "%s-%s" % (prefix, uuid.uuid4())
+
+
 def open_blindbox(token, uid):
-    """开盲盒：查询可抽次数（lottery/chances），能量足够（>=10）则抽一次。
-    盲盒每次消耗 10 点能量，属于成长中心可 API 化部分，与『完成成长计划任务』无关。
-    返回 (人话汇报, 剩余机会) 元组。能量不足或机会为 0 时不抽，避免无谓报错。"""
+    """开盲盒（抽奖）：先查可抽次数 lottery/chances，次数 > 0 才抽一次。
+    抽奖机会来自连登兑换等，与能量无关（能量是另一条「能量开 Buddy 盲盒」路径）。
+    请求体必须带 client_token，否则服务端 400 invalid request。
+    返回 (人话汇报, 剩余机会) 元组。无机会时不抽，避免无谓报错。"""
     sc, sb = _call(token, uid, LOTTERY_CHANCES, method="GET")
     if not _ok(sc, sb):
         return f"查询盲盒机会失败（HTTP {sc}）", None
     chances = _unwrap(sb).get("balance")
     if not isinstance(chances, int) or chances <= 0:
         return "暂无可开盲盒机会", chances
-    # 开盲盒每次固定消耗 10 点能量；能量不足时接口返回 400 invalid request，属前端约束
-    es, eb = _call(token, uid, ENERGY, method="GET")
-    energy = _unwrap(eb).get("balance") if _ok(es, eb) else None
-    if isinstance(energy, int) and energy < BLINDBOX_ENERGY_COST:
-        return f"能量不足（当前{energy}/{BLINDBOX_ENERGY_COST}）", chances
-    dc, db = _call(token, uid, LOTTERY_DRAW, payload={})
+    dc, db = _call(token, uid, LOTTERY_DRAW, payload={"client_token": _client_token()})
     if _ok(dc, db):
         prize = _unwrap(db).get("prize_name") or _unwrap(db).get("prize") or "未知奖励"
         return f"开盲盒获得：{prize}", max(0, chances - 1)
-    return f"开盲盒失败（HTTP {dc}，能量{energy}）", chances
+    # 区分「次数不足」与真正失败：服务端对 0 次返回 400 + insufficient chance balance
+    msg = _unwrap(db).get("msg") or ""
+    if "insufficient" in msg.lower() or "not enough" in msg.lower():
+        return f"开盲盒：{msg}", chances
+    return f"开盲盒失败（HTTP {dc}）{('：' + msg) if msg else ''}", chances
 
 
 def run_growth(token, uid):
@@ -445,14 +451,12 @@ def _parse_sse_content(raw):
     return "".join(out)
 
 
-def chat_once(token, uid, prompt=None):
+def chat_once(token, uid):
     """发起一次最基础的真实对话（固定模型 deepseek-v4.1-flash，SSE 流式）。
     目的仅为发起一句话真实对话，不读取/不修改任何成长计划任务。
-    默认发送「你好」，回执固定为「已发起对话」（不含模型回复内容）。
+    固定发送「你好」，回执固定为「已发起对话」（不含模型回复内容）。
     返回 (状态汇报, 回复文本)。"""
-    if prompt is None or not str(prompt).strip():
-        prompt = "你好"
-    prompt = str(prompt).strip()
+    prompt = "你好"
     # 请求体只含标准 OpenAI 字段；控制台「使用端」列由下列产品标识头决定，
     # 缺失时该列显示「-」，带上后显示 WorkBuddy（详见顶部说明）。
     body = {
