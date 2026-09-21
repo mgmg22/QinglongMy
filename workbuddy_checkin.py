@@ -53,7 +53,6 @@ import os
 import re
 import sys
 import json
-import uuid
 import platform
 import requests
 import sendNotify
@@ -117,8 +116,11 @@ TRAVEL_STATUS = GROWTH_BASE + "/buddy/travel/status"
 TRAVEL_CONFIG = GROWTH_BASE + "/buddy/travel/config"
 TRAVEL_DEPART = GROWTH_BASE + "/buddy/travel/depart"
 TRAVEL_CLAIM = GROWTH_BASE + "/buddy/travel/claim"
-LOTTERY_CHANCES = GROWTH_BASE + "/lottery/chances"
-LOTTERY_DRAW = GROWTH_BASE + "/lottery/draw"
+# 开盲盒（能量开启 Buddy 盲盒）：能量查询 + 开启接口。
+# 规则来自客户端：每攒够 10 点能量可开启一次盲盒（开启消耗 10 能量）。
+ENERGY = GROWTH_BASE + "/energy"
+BLINDBOX_ENERGY_COST = 10
+BUDDY_OPEN = GROWTH_BASE + "/buddy/open"
 
 # ---------------------------------------------------------------------------
 # 基础对话：每次签到触发一次最基础真实对话（不读取/不修改任何成长计划任务）
@@ -383,35 +385,34 @@ def buddy_travel(token, uid):
     return ("；".join(parts) if parts else "旅行无变动"), data
 
 
-def _client_token(prefix="u"):
-    """活动类写接口（开盲盒抽奖 lottery/draw 等）要求的防重放 token。
-
-    官方前端用 crypto.randomUUID() 拼成 "u-<uuid>"，服务端仅做幂等去重、不校验格式；
-    缺了它 /lottery/draw 直接 400 invalid request（实测）。来源：github.com/88lin/
-    workbuddy-auto-signin 逆向所得。"""
-    return "%s-%s" % (prefix, uuid.uuid4())
-
-
 def open_blindbox(token, uid):
-    """开盲盒（抽奖）：先查可抽次数 lottery/chances，次数 > 0 才抽一次。
-    抽奖机会来自连登兑换等，与能量无关（能量是另一条「能量开 Buddy 盲盒」路径）。
-    请求体必须带 client_token，否则服务端 400 invalid request。
-    返回 (人话汇报, 剩余机会) 元组。无机会时不抽，避免无谓报错。"""
-    sc, sb = _call(token, uid, LOTTERY_CHANCES, method="GET")
-    if not _ok(sc, sb):
-        return f"查询盲盒机会失败（HTTP {sc}）", None
-    chances = _unwrap(sb).get("balance")
-    if not isinstance(chances, int) or chances <= 0:
-        return "暂无可开盲盒机会", chances
-    dc, db = _call(token, uid, LOTTERY_DRAW, payload={"client_token": _client_token()})
-    if _ok(dc, db):
-        prize = _unwrap(db).get("prize_name") or _unwrap(db).get("prize") or "未知奖励"
-        return f"开盲盒获得：{prize}", max(0, chances - 1)
-    # 区分「次数不足」与真正失败：服务端对 0 次返回 400 + insufficient chance balance
-    msg = _unwrap(db).get("msg") or ""
-    if "insufficient" in msg.lower() or "not enough" in msg.lower():
-        return f"开盲盒：{msg}", chances
-    return f"开盲盒失败（HTTP {dc}）{('：' + msg) if msg else ''}", chances
+    """开盲盒（能量开启 Buddy 盲盒）：先查能量余额 energy，余额 >= 10 才开启一次。
+    规则来自客户端：每攒够 10 点能量可开启一次盲盒（开启消耗 10 能量）。
+    开启接口 buddy/open 请求体为 {}，无需 client_token，由能量余额做门槛。
+    返回 (人话汇报, 剩余能量) 元组。能量不足时不开启，避免无谓报错。"""
+    es, eb = _call(token, uid, ENERGY, method="GET")
+    if not _ok(es, eb):
+        return f"查询能量失败（HTTP {es}）", None
+    energy = _unwrap(eb).get("balance")
+    if not isinstance(energy, int) or energy < BLINDBOX_ENERGY_COST:
+        return f"能量不足（当前{energy}/{BLINDBOX_ENERGY_COST}），暂不能开盲盒", energy
+    oc, ob = _call(token, uid, BUDDY_OPEN, payload={})
+    if _ok(oc, ob):
+        data = _unwrap(ob)
+        results = data.get("results") or []
+        if results:
+            r0 = results[0] or {}
+            name = (r0.get("name") or (r0.get("buddy") or {}).get("name")
+                    or (r0.get("instance") or {}).get("name") or "未知 Buddy")
+            rarity = (r0.get("rarity") or (r0.get("buddy") or {}).get("rarity")
+                      or (r0.get("instance") or {}).get("rarity") or "")
+            got = f"{name}（{rarity}）" if rarity else name
+            cnt = data.get("count") or len(results)
+            return ("开盲盒获得：" + got + (f" 等 {cnt} 个" if cnt and cnt > 1 else ""),
+                    max(0, energy - BLINDBOX_ENERGY_COST))
+        return "开盲盒成功", max(0, energy - BLINDBOX_ENERGY_COST)
+    msg = _unwrap(ob).get("msg") or ""
+    return f"开盲盒失败（HTTP {oc}）{('：' + msg) if msg else ''}", energy
 
 
 def run_growth(token, uid):
