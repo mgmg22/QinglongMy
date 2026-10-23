@@ -17,7 +17,7 @@
 * [job_spider](job_spider.py) 指定过滤条件获取远程工作信息
 * [xb](xb.py) 全网羊毛线报精选，使用 gemini-3-flash-preview 模型进行内容分析
 * [douban_spider](douban_spider.py) 豆瓣小组（上海租房版demo）
-* [workbuddy_checkin](workbuddy_checkin.py) WorkBuddy 每日积分自动签到（100积分/天，连续第7天1000积分），**默认只读环境变量**，`--export-env`（或 `--export-env --save` 写回 .env）可读取本机登录态刷新 token，幂等可重复运行。**每次运行固定一起执行**：① 每日签到 ② 成长中心（派猫旅行往返、开盲盒）③ 一次最基础真实对话。
+* [workbuddy_checkin](workbuddy_checkin.py) WorkBuddy 每日积分自动签到（100积分/天，连续第7天1000积分），**默认只读环境变量**，`--export-env`（或 `--export-env --save` 写回 .env）可读取本机登录态刷新 token，幂等可重复运行。**每次运行固定一起执行**：① 每日签到 ② 成长中心（派猫旅行往返、开盲盒）。
 * [trae_checkin](trae_checkin.py) Trae Work 每日积分自动签到，**默认只读环境变量**（不再自动读本机）；**内置自动续期/自愈**：access token 仅约 14 天有效，脚本用 `refreshToken` + 设备 ECDSA 私钥（`--export-keys` 引导，纯标准库签名、无需第三方库）向 `ExchangeToken` 换发新 token，在「无 token / 即将过期(<48h) / 鉴权失败」时自动续期并重试，续期结果写回 `.trae_token.json` 缓存（青龙环境靠它自愈）；`--export-keys`（同 `--export-env`）/ `--renew` 配合 `--save` 可写回 .env 刷新
 * [minimax_checkin](minimax_checkin.py) MiniMax Code 每日积分自动签到（400积分/天，第4、7天1000积分），**默认只读环境变量**，逆向 `yy`/`x-signature` 签名；**每次运行先调 `/v1/api/user/renewal` 续期（相当于先登录）再签到**，新 token 自动写回 `.minimax_token.json` 缓存（青龙环境靠它自愈，token 永不失效）；`--export-env`（先续期再导出）/`--renew`（仅续期）配合 `--save` 可写回 .env 刷新
 * [checkin_all](checkin_all.py) 聚合签到（推荐）：**只需设一个定时**，依次跑 WorkBuddy / Trae Work / MiniMax Code ，合并结果后**只发一次推送**。各子脚本的单独定时可停用/删除。另支持 `python checkin_all.py --export-env --save` **一条命令批量刷新 token**（等价逐个执行各子脚本的 `--export-env --save`），要求本机对应桌面端/已登录态均已就绪

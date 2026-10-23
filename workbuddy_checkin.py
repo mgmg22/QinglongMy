@@ -33,17 +33,10 @@ token 过期时，在本机（已登录 WorkBuddy 桌面端 v5.3.8+）执行：
 优先级（仅 --export-env 路径）：本机明文登录态 > 其它。
 
 ==============================================================================
-基础对话（chat_once）：
-    每次签到一起触发一条最基础的真实对话（固定模型 deepseek-v4.1-flash，
-    POST /v2/chat/completions，SSE 流式）。请求会额外携带产品标识头：
-        X-Product / X-IDE-Name / X-IDE-Type / X-IDE-Version / X-Product-Version / X-Domain
-    不带这套头时，服务端不把该请求归属到客户端，控制台「积分消耗明细」的
-    「使用端」列会显示「-」（认不出来）；带上后即显示 WorkBuddy。
-==============================================================================
 成长中心（派猫旅行 / 开盲盒）：
     每次运行都会在签到后顺带执行成长中心可 API 化部分（派猫旅行往返、开盲盒），
     不会自动完成成长计划任务本体，也不会去领任务奖励。无独立子命令，固定一起跑：
-        python workbuddy_checkin.py            # 签到 + 基础对话 + 成长中心
+        python workbuddy_checkin.py            # 签到 + 成长中心
     若成长中心接口需要按产品路由，可设置环境变量 WB_DOMAIN（取自本机登录态
     auth.domain，如 www.workbuddy.cn）；留空通常亦可命中默认产品。
 ==============================================================================
@@ -121,16 +114,6 @@ TRAVEL_CLAIM = GROWTH_BASE + "/buddy/travel/claim"
 ENERGY = GROWTH_BASE + "/energy"
 BLINDBOX_ENERGY_COST = 10
 BUDDY_OPEN = GROWTH_BASE + "/buddy/open"
-
-# ---------------------------------------------------------------------------
-# 基础对话：每次签到触发一次最基础真实对话（不读取/不修改任何成长计划任务）
-# 端点与签到同域名同鉴权；模型固定 deepseek-v4.1-flash；必须 stream:true（SSE）
-# 仅用于发起一次真实对话，与成长计划任务本体无关
-# ---------------------------------------------------------------------------
-CHAT_PATH = "/v2/chat/completions"
-CHAT_MODEL = "deepseek-v4.1-flash"
-# 客户端版本：与登录态 auth 客户端版本保持一致，用于标识控制台「使用端」列
-CHAT_CLIENT_VERSION = "5.3.8"
 
 
 def _unwrap(body):
@@ -429,79 +412,15 @@ def run_growth(token, uid):
     return "；".join(parts) if parts else "成长中心无可执行项"
 
 
-def _parse_sse_content(raw):
-    """从 SSE 原始响应中拼接所有 delta.content（遇 [DONE] 即止）。"""
-    out = []
-    for line in raw.splitlines():
-        line = line.strip()
-        if not line.startswith("data:"):
-            continue
-        payload = line[5:].strip()
-        if payload == "[DONE]":
-            break
-        try:
-            obj = json.loads(payload)
-        except Exception:
-            continue
-        if isinstance(obj, dict):
-            choices = obj.get("choices") or []
-            if choices:
-                c = (choices[0].get("delta") or {}).get("content")
-                if c:
-                    out.append(c)
-    return "".join(out)
-
-
-def chat_once(token, uid):
-    """发起一次最基础的真实对话（固定模型 deepseek-v4.1-flash，SSE 流式）。
-    目的仅为发起一句话真实对话，不读取/不修改任何成长计划任务。
-    固定发送「你好」，回执固定为「已发起对话」（不含模型回复内容）。
-    返回 (状态汇报, 回复文本)。"""
-    prompt = "你好"
-    # 请求体只含标准 OpenAI 字段；控制台「使用端」列由下列产品标识头决定，
-    # 缺失时该列显示「-」，带上后显示 WorkBuddy（详见顶部说明）。
-    body = {
-        "model": CHAT_MODEL,
-        "messages": [{"role": "user", "content": prompt}],
-        "stream": True,
-    }
-    headers = {
-        "Content-Type": "application/json",
-        "Accept": "text/event-stream",
-        "Authorization": f"Bearer {token}",
-        "X-User-Id": uid,
-        "X-Product": "WorkBuddy",
-        "X-IDE-Name": "WorkBuddy",
-        "X-IDE-Type": "WorkBuddy",
-        "X-IDE-Version": CHAT_CLIENT_VERSION,
-        "X-Product-Version": CHAT_CLIENT_VERSION,
-        "X-Domain": "www.workbuddy.cn",
-        "User-Agent": f"WorkBuddyIDE/{CHAT_CLIENT_VERSION} WorkBuddy/{CHAT_CLIENT_VERSION}",
-    }
-    try:
-        r = requests.post(API_BASE + CHAT_PATH, headers=headers,
-                          data=json.dumps(body), stream=True, timeout=60)
-        if r.status_code != 200:
-            return f"对话请求失败（HTTP {r.status_code}）：{r.text[:120]}", None
-        text = _parse_sse_content(r.content.decode("utf-8", "replace"))
-        if not text:
-            return "对话已发送，但未解析到回复内容", None
-        return "已发起对话", text
-    except Exception as e:
-        return f"对话请求异常：{str(e)[:160]}", None
-
-
 def run_full(cred):
-    """完整运行：每日签到 + 基础真实对话 + 成长中心（派猫旅行 / 开盲盒）。
-    返回 (flag, content)，content 为三部分合并文本。供单独运行与 checkin_all
-    聚合脚本共用，确保无论哪种入口都执行同样的全量流程（含派猫/盲盒/对话）。
-    对话与成长中心仅在凭据齐全时执行；任一部分失败不影响其余部分如实汇总。"""
+    """完整运行：每日签到 + 成长中心（派猫旅行 / 开盲盒）。
+    返回 (flag, content)，content 为各部分合并文本。供单独运行与 checkin_all
+    聚合脚本共用，确保无论哪种入口都执行同样的全量流程（含派猫/盲盒）。
+    成长中心仅在凭据齐全时执行；任一部分失败不影响其余部分如实汇总。"""
     cred = cred or {}
     token, uid = cred.get("token", ""), cred.get("uid", "")
     flag, content = checkin_once(cred)
     if token and uid:
-        ch, _ = chat_once(token, uid)
-        content = content + "\n" + ch
         gr = run_growth(token, uid)
         content = content + "\n" + gr
     return flag, content
