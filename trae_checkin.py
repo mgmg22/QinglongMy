@@ -134,6 +134,7 @@ CLAIM_PATH = "/trae/api/v2/ug/checkin_credits/claim"
 ENTITLEMENT_PATH = "/trae/api/v2/pay/user_current_entitlement_list"
 HOST = "https://api.trae.cn"
 STORAGE_REL = os.path.join("User", "globalStorage", "storage.json")
+STORAGE_DIRS = ["TRAE SOLO CN", "Trae CN"]  # 新旧版本桌面端目录名不同，按序探测
 AUTH_KEY = "iCubeAuthInfo://icube.cloudide"
 
 # ===== 自动续期相关常量 =====
@@ -379,11 +380,8 @@ def exchange_token(cred: dict):
     }, None
 
 def write_back_storage(new_token: str, new_refresh: str, token_expire_ms: float, refresh_expire_ms: float):
-    appdata = os.environ.get("APPDATA", "")
-    if not appdata:
-        return
-    sp = os.path.join(appdata, "TRAE SOLO CN", STORAGE_REL)
-    if not os.path.isfile(sp):
+    sp = find_storage_path()
+    if not sp:
         return
     try:
         with open(sp, "r", encoding="utf-8") as fh:
@@ -476,12 +474,19 @@ def extract_dc_device_id(storage: dict) -> str:
         return cands[0]
     return ""
 
-def read_local_credential():
+def find_storage_path():
     appdata = os.environ.get("APPDATA", "")
     if not appdata:
         return None
-    storage_path = os.path.join(appdata, "TRAE SOLO CN", STORAGE_REL)
-    if not os.path.isfile(storage_path):
+    for d in STORAGE_DIRS:
+        sp = os.path.join(appdata, d, STORAGE_REL)
+        if os.path.isfile(sp):
+            return sp
+    return None
+
+def read_local_credential():
+    storage_path = find_storage_path()
+    if not storage_path:
         return None
     try:
         with open(storage_path, "r", encoding="utf-8") as fh:
