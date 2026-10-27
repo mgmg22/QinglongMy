@@ -2,6 +2,8 @@
 
 自用青龙脚本库，抓取特定数据处理。将结果格式化为 Markdown 文本后通过机器人发送通知
 
+> ☁️ 免服务器版：[cloudflare-checkin](https://github.com/mgmg22/cloudflare-checkin) —— 把签到类脚本（WorkBuddy / Trae / MiniMax / xb 线报）重写为 TypeScript + Cloudflare Workers，Cron 定时触发、KV 持久化凭据，无需常驻青龙面板
+
 | [Server酱(微信服务号) ](https://sct.ftqq.com/sendkey/r/14730) | [PushMe(App)](https://push.i-i.me/) |             钉钉机器人              |
 |:-------------------------------------------------------:|:-----------------------------------:|:------------------------------:|
 |             ![](screenshots/preview-1.jpg)              |   ![](screenshots/preview-2.jpg)    | ![](screenshots/preview-5.jpg) |
